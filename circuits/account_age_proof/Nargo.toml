@@ -1,0 +1,7 @@
+[package]
+name = "account_age_proof"
+type = "bin"
+authors = ["ForgePass"]
+compiler_version = ">=1.0.0"
+
+[dependencies]

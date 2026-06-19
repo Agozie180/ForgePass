@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RecordStatus { ACTIVE SUSPENDED REVOKED EXPIRED }
+enum SessionState { CREATED PROVING VERIFIED ANCHORED FAILED EXPIRED }
+enum ProofType { INCOME BALANCE ACCOUNT_AGE TRANSACTION_VOLUME TRUST_SCORE }
+
+model User {
+  id           String   @id @default(cuid())
+  wallet       String   @unique
+  termsVersion String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  sessions     ProofSession[]
+  passports    Passport[]
+}
+
+model Policy {
+  id               String       @id
+  name             String
+  proofType        ProofType
+  circuitVersion   String
+  policyCommitment String       @unique
+  validFrom        DateTime
+  validUntil       DateTime?
+  status           RecordStatus @default(ACTIVE)
+  sessions         ProofSession[]
+  claims           CredentialClaim[]
+}
+
+model ProofSession {
+  id        String       @id @default(cuid())
+  userId    String
+  policyId  String
+  state     SessionState @default(CREATED)
+  expiresAt DateTime
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  user      User         @relation(fields: [userId], references: [id])
+  policy    Policy       @relation(fields: [policyId], references: [id])
+  receipt   VerificationReceipt?
+
+  @@index([userId, createdAt])
+}
+
+model VerificationReceipt {
+  id                     String   @id @default(cuid())
+  sessionId              String   @unique
+  verificationId         String   @unique
+  proofCommitment        String
+  publicInputCommitment  String
+  nullifierHash          String   @unique
+  verifierKeyId          String
+  transactionHash        String?  @unique
+  issuedAt               DateTime
+  expiresAt              DateTime
+  anchoredAt             DateTime?
+  session                ProofSession @relation(fields: [sessionId], references: [id])
+  claim                  CredentialClaim?
+}
+
+model Passport {
+  id          String       @id @default(cuid())
+  userId      String
+  contractId  String
+  ledgerId    String       @unique
+  status      RecordStatus @default(ACTIVE)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  user        User         @relation(fields: [userId], references: [id])
+  claims      CredentialClaim[]
+
+  @@unique([userId, contractId])
+}
+
+model CredentialClaim {
+  id             String       @id @default(cuid())
+  passportId     String
+  policyId       String
+  receiptId      String       @unique
+  proofType      ProofType
+  status         RecordStatus @default(ACTIVE)
+  issuedAt       DateTime
+  expiresAt      DateTime
+  passport       Passport     @relation(fields: [passportId], references: [id])
+  policy         Policy       @relation(fields: [policyId], references: [id])
+  receipt        VerificationReceipt @relation(fields: [receiptId], references: [id])
+
+  @@index([passportId, status])
+}
+
+model AuditEvent {
+  id          String   @id @default(cuid())
+  actorHash   String
+  action      String
+  objectType  String
+  objectId    String
+  metadata    Json
+  createdAt   DateTime @default(now())
+
+  @@index([objectType, objectId, createdAt])
+}

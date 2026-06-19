@@ -1,0 +1,14 @@
+node_modules
+.next
+out
+.env
+.env.local
+coverage
+target
+.tooling
+*.wasm
+!artifacts/soroban/*.wasm
+*.proof
+*.tsbuildinfo
+circuits/**/target
+contracts/target
