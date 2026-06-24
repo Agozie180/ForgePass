@@ -1,55 +1,73 @@
 # Demo Script
 
+A concise live walkthrough of the ForgePass Proof Studio. For the recorded
+version see [`demo-video-script.md`](demo-video-script.md).
+
 ## Live demo (about 2 minutes)
 
-**0:00 - The problem**
+**0:00 — The problem**
 
-“Every financial application asks people to surrender data to earn trust. With
-ForgePass, the institution asks a better question: can you prove you qualify?”
+> "Every financial application asks people to surrender data to earn trust. With
+> ForgePass, the institution asks a better question: can you prove you qualify?"
 
-**0:20 - Private inputs**
+Open the landing page and scroll the architecture pipeline: Private data →
+Off-chain compute → Noir → UltraHonk → Soroban → Credential.
 
-Launch Proof Studio. Point out `$8,000` income, `$3,000` balance, `120`
-transactions and `18 months` account age. Emphasize that these are locally held
-attestations. Click **Generate private score**.
+**0:20 — Connect**
 
-**0:40 - Private score**
+Click **Connect wallet**. Choose **Freighter** to bind a real Stellar Testnet
+address, or **Demo Mode** to run the flow with no extension (always labeled
+"Demo"). The address and network appear in the nav and the Proof Studio.
 
-Show the score of `91` and Prime Access policy requiring a score above `80`.
-“The score is useful, but the lender does not need to see it.” Click **Generate
-ZK proof**.
+**0:35 — Private inputs (off-chain computation)**
 
-**1:00 - Wow moment**
+In the Proof Studio, select the **Prime Access** policy (`score > 80`). Adjust
+the income / balance / activity sliders — the values are held only in the
+browser. Click **Compute private score**.
 
-Let the Noir proof animation finish. The private values and score disappear.
-Pause on: **Trust score qualified** and **0 private values**.
+**0:55 — Private score**
 
-“Stellar now knows this predicate is verified. It never learns the score, income,
-balance or history.” Click **Issue Trust Passport**.
+Show the score of `91`, the component breakdown, and the **Qualifies** badge
+against the policy threshold. "The score is useful, but the lender does not need
+to see it." Click **Generate ZK proof**.
 
-**1:25 - Passport**
+**1:15 — Wow moment**
 
-Show the passport and claims. “The next lender, landlord or marketplace receives
-portable trust, not another copy of the user's financial life.”
+Let the Noir / UltraHonk animation finish. The private values and score
+disappear. Land on **"Reputation verified. Privacy preserved."** and **0 private
+values**.
 
-**1:45 - Close**
+**1:30 — Stellar verification**
 
-“Today: show me your data. Tomorrow: prove you qualify. ForgePass is the
-zero-knowledge trust layer for the digital economy.”
+Pan the **Stellar Verification Record**: network, ledger, proof commitment,
+nullifier, verifier and registry contracts. Note that simulated values are
+labeled "(simulated)". Click **Issue ForgePass Credential**.
 
-## Demo video shot list (60 seconds)
+**1:45 — Credential**
+
+Show the **ForgePass Reputation Credential** — verified claims only (income,
+balance, age, activity, reputation). Use **Copy link**, **Share**, and **QR
+code**. Point at the notice: *no private financial information is stored or
+revealed.*
+
+**2:00 — Close**
+
+> "Today: show me your data. Tomorrow: prove you qualify. Reputation verified,
+> privacy preserved — forge trust, reveal nothing."
+
+## Shot list (60-second cut)
 
 | Time | Visual | Voiceover |
 | --- | --- | --- |
-| 0-7s | Landing headline, slow push-in | “Trust online still requires exposure.” |
-| 7-16s | Four private signals enter vault | “ForgePass turns private financial signals into proof.” |
-| 16-24s | Score resolves to 91 | “A private Trust Score is calculated locally.” |
-| 24-35s | Noir proof animation | “Zero knowledge proves only the required predicate.” |
-| 35-44s | Values blur and disappear | “The score and every input vanish.” |
-| 44-52s | Stellar verification receipt | “Stellar anchors a replay-safe verification.” |
-| 52-60s | Passport assembles | “Forge trust. Reveal nothing.” |
+| 0-7s | Landing headline, slow push-in | "Trust online still requires exposure." |
+| 7-16s | Editable private signals | "ForgePass turns private financial signals into proof." |
+| 16-24s | Score resolves to 91 | "A private reputation score is computed locally." |
+| 24-35s | Noir / UltraHonk proof animation | "Zero knowledge proves only the required predicate." |
+| 35-44s | Values blur and disappear | "The score and every input vanish." |
+| 44-52s | Stellar verification record | "Stellar anchors a replay-safe verification." |
+| 52-60s | Credential assembles | "Forge trust. Reveal nothing." |
 
 Use restrained sound design: muted input clicks, a rising proof tone, then one
 clean confirmation note at verification. Never show invented explorer footage as
-a real transaction; use a deployed Testnet transaction or label the preview.
-
+a real transaction; use a deployed Testnet transaction or label the preview as a
+simulation (the UI already does this).
