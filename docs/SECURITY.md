@@ -3,9 +3,9 @@
 ## Protected assets
 
 - Raw income, balance, account-age and transaction data.
-- The exact Trust Score and its component scores.
+- The exact reputation score and its component scores.
 - Holder secrets, source credentials and proof witnesses.
-- Integrity and non-transferability of passport claims.
+- Integrity and non-transferability of ForgePass Reputation Credential claims.
 - Availability and integrity of verifier and registry contracts.
 
 ## Privacy guarantees
@@ -26,6 +26,72 @@ fact that a proof was created. Reusing a wallet across services remains linkable
 4. The verifier quorum verifies proofs faithfully until native verification is available.
 5. Stellar consensus and Soroban authorization behave as specified.
 6. The holder device is not compromised while processing private inputs.
+
+## Replay protection strategy
+
+Every proof carries a domain-separated `nullifier` derived from the holder, the
+policy, and the score/circuit version (`lib/proof/forge.ts`). The
+`ForgePassVerifier` contract consumes the nullifier atomically — a second
+submission of the same `(holder, policy)` proof is rejected with `Replay`. The
+nullifier domain also folds in the network passphrase and contract address so a
+receipt cannot be replayed across networks or contracts. Per-policy nullifiers
+keep distinct eligibility checks unlinkable to each other.
+
+## Wallet security
+
+- ForgePass requests **read-only** wallet data: public address and network. It
+  never requests private keys or seed phrases, and never signs a transaction
+  without explicit, contextual Freighter authorization.
+- The credential is bound to the connected address via `holder_binding`, so a
+  proof issued for one wallet cannot be presented by another.
+- Session state persisted in `localStorage` is limited to the chosen mode and a
+  public address; clearing it (Disconnect) fully resets the session.
+- **Demo Mode** uses a clearly labeled, non-custodial placeholder address and
+  performs no signing. It exists only so judges can run the flow without an
+  extension and must never be presented as a real wallet.
+
+## Noir / circuit assumptions
+
+- The compiled ACIR and verification key match the source in `circuits/` and the
+  pinned `nargo v1.0.0-beta.22` toolchain.
+- The in-browser reputation model (`lib/domain/trust-score.ts`) is bit-for-bit
+  identical to `trust_score_proof`; divergence would let a holder prove a score
+  they did not compute. This is guarded by shared test vectors.
+- Source attestation verification inside the circuit is required for production
+  and is not implemented in the demo (inputs are self-asserted).
+
+## Soroban assumptions
+
+- The verifier role faithfully verifies UltraHonk proofs until native on-chain
+  verification (rs-soroban-ultrahonk) is integrated. That integration fixes the
+  verification key at deploy time, generates proofs with `--oracle_hash keccak`
+  to match Soroban's native Keccak-256, and verifies BN254 pairings through the
+  Protocol 25 host functions (`g1_add`/`g1_mul`/`pairing_check`) to stay within
+  the per-transaction instruction budget. Until then the verifier→registry path
+  is authorized by an explicit verifier role rather than an in-circuit check.
+- Checks-effects-interactions ordering holds for nullifier consumption.
+- Admin operations (pause, verifier rotation, revocation) are protected by
+  `require_auth` and, in production, multisig.
+
+## Demo limitations
+
+The deployed demo is a vertical slice. Specifically:
+
+- Browser-side UltraHonk proof generation and the Soroban verification round-trip
+  are **simulated**; the SHA-256 commitments are real but the proof bytes and
+  Testnet submission are not. The UI labels every simulated value "(simulated)".
+- Contract IDs are placeholders until deployment; ledger sequence and transaction
+  hash are deterministic simulations.
+- Inputs are self-asserted — there is no source attestation in the demo.
+- The reputation model is illustrative ("Demo Reputation Model"), not a credit score.
+
+## Future production security
+
+- Replace simulation with real Noir + UltraHonk proving and the on-chain
+  UltraHonk verifier; deploy verifier + registry to Testnet/Mainnet.
+- Add signed source attestations and an independently operated verifier quorum.
+- External circuit and contract audits; hardware-backed key ceremonies.
+- See the threat table below for the full target control set.
 
 ## Threats and controls
 

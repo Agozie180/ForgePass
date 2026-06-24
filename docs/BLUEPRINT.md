@@ -5,8 +5,8 @@
 ForgePass is a privacy-preserving trust infrastructure layer. A holder proves a
 financial predicate with Noir, an authorized verifier validates the proof, and
 Soroban records a replay-safe verification receipt and issues a non-transferable
-Trust Passport. Raw financial data and the private trust score never leave the
-holder's proof session.
+ForgePass Reputation Credential. Raw financial data and the private reputation
+score never leave the holder's proof session.
 
 ## 1. Full Architecture
 
@@ -58,6 +58,17 @@ verifier without significant cryptographic engineering. The launch architecture
 uses cryptographic Noir verification by Barretenberg and a threshold-authorized
 verification receipt on Soroban. A future in-contract verifier can replace the
 receipt adapter without changing credentials, policies or the passport registry.
+
+The concrete migration path follows the `indextree/ultrahonk_soroban_contract`
+reference: a verifier contract that pins the verification key at deploy time and
+exposes `verify_proof(proof, public_inputs)` / `is_verified`. Proofs are produced
+with Barretenberg's `--oracle_hash keccak` so on-chain hashing maps to Soroban's
+native Keccak-256, and BN254 operations route through the Protocol 25 host
+functions (`g1_add`, `g1_mul`, `pairing_check`) — without which a single pairing
+(~560M instructions) exceeds Soroban's ~100M budget; the native path lands near
+~112M and reduces contract size by roughly 8×. `ForgePassVerifier.verify_and_consume`
+is the receipt adapter this entrypoint will slot beneath, leaving the nullifier,
+expiry and registry logic untouched.
 
 ## 2. Folder Structure
 
@@ -266,24 +277,24 @@ bytes, wallet balances, financial inputs, scores and source payloads.
 ```
 
 At verification, private cards blur, collapse, and are replaced by a single
-green `Trust Score Qualified` receipt. The passport then assembles claim by claim.
+green `Reputation Qualified` receipt. The credential then assembles claim by claim.
 
-### Trust Passport
+### ForgePass Reputation Credential
 
 ```text
 +-----------------------------------+
-| FORGEPASS TRUST PASSPORT          |
+| FORGEPASS REPUTATION CREDENTIAL   |
 | G...7QK                 ACTIVE    |
-| [x] Income verified              |
-| [x] Balance verified             |
+| [x] Reputation qualified         |
+| [x] Income threshold verified    |
+| [x] Balance threshold verified   |
 | [x] Account age verified         |
 | [x] Transaction activity verified|
-| [x] Trust score qualified         |
 | Verified on Stellar Testnet       |
 +-----------------------------------+
 ```
 
-### Passport lifecycle
+### Credential lifecycle
 
 ```mermaid
 stateDiagram-v2
