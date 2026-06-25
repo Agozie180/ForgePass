@@ -75,20 +75,18 @@ keep distinct eligibility checks unlinkable to each other.
 
 ## Demo limitations
 
-The deployed demo is a vertical slice. Specifically:
+The deployed demo is a vertical slice. Native UltraHonk verification requires a separate VK-backed verifier contract deployment. Specifically:
 
 - Browser-side UltraHonk proof generation and the Soroban verification round-trip
-  are **simulated**; the SHA-256 commitments are real but the proof bytes and
-  Testnet submission are not. The UI labels every simulated value "(simulated)".
-- Contract IDs are placeholders until deployment; ledger sequence and transaction
-  hash are deterministic simulations.
+  are **simulated** until Barretenberg VK/proof/public-input artifacts and a native verifier contract are deployed; the SHA-256 commitments are real but the proof bytes and
+  Testnet submission are not. The UI labels simulated proof-generation and transaction values; live contract links are shown separately.
+- Contract IDs are live Stellar Testnet deployments when the public env vars are set; ledger sequence and transaction hash in the browser demo remain deterministic simulations until real submission is wired.
 - Inputs are self-asserted — there is no source attestation in the demo.
 - The reputation model is illustrative ("Demo Reputation Model"), not a credit score.
 
 ## Future production security
 
-- Replace simulation with real Noir + UltraHonk proving and the on-chain
-  UltraHonk verifier; deploy verifier + registry to Testnet/Mainnet.
+- Replace simulation with real Noir + UltraHonk proving and the native on-chain UltraHonk verifier path; keep the deployed verifier + registry refreshed on Testnet, then deploy audited versions to Mainnet.
 - Add signed source attestations and an independently operated verifier quorum.
 - External circuit and contract audits; hardware-backed key ceremonies.
 - See the threat table below for the full target control set.

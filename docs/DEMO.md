@@ -29,11 +29,11 @@ browser. Click **Compute private score**.
 
 Show the score of `91`, the component breakdown, and the **Qualifies** badge
 against the policy threshold. "The score is useful, but the lender does not need
-to see it." Click **Generate ZK proof**.
+to see it." Click **Generate scaffolded proof**.
 
 **1:15 — Wow moment**
 
-Let the Noir / UltraHonk animation finish. The private values and score
+Let the Noir / UltraHonk scaffold animation finish. The private values and score
 disappear. Land on **"Reputation verified. Privacy preserved."** and **0 private
 values**.
 

@@ -45,7 +45,8 @@ describe("forgeProof", () => {
     const env = await forgeProof(getPolicy("prime-access"), score, HOLDER);
     expect(credentialId(env)).toMatch(/^FP-[0-9A-F]{8}$/);
     const rec = await buildVerificationRecord(env, HOLDER, "2026-01-01T00:00:00.000Z");
-    expect(rec.status).toBe("Verified");
+    expect(rec.status).toBe("Scaffolded");
+    expect(rec.onChain).toBe(false);
     expect(rec.txHash).toMatch(/^[0-9a-f]{64}$/);
     expect(rec.holder).toBe(HOLDER);
   });

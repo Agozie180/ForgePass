@@ -10,7 +10,7 @@ import QRCode from "qrcode";
 import { calculateTrustScore, DEMO_INPUTS, SCORE_MODEL, type TrustInputs } from "@/lib/domain/trust-score";
 import { DEFAULT_POLICY_ID, deriveClaims, getPolicy, POLICIES } from "@/lib/domain/policies";
 import { buildVerificationRecord, checkInputs, credentialId, forgeProof, shortHash, type ProofEnvelope, type VerificationRecord } from "@/lib/proof/forge";
-import { explorerContract, explorerTx, HAS_LIVE_CONTRACTS, shortId } from "@/lib/stellar/config";
+import { CONTRACTS, explorerContract, explorerTx, HAS_LIVE_CONTRACTS, HAS_NATIVE_ULTRAHONK_VERIFIER, shortId } from "@/lib/stellar/config";
 import { DEMO_ADDRESS, useWallet } from "@/components/wallet-provider";
 
 type Stage = "data" | "score" | "proving" | "verified" | "credential";
@@ -191,7 +191,7 @@ export function ProofExperience() {
                     <p><LockKeyhole size={16} /> Only the boolean “above {policy.scoreThreshold}” leaves this device</p>
                     <div className="action-buttons">
                       <button className="ghost" onClick={() => setStage("data")}>Edit inputs</button>
-                      <button onClick={runProof} disabled={!qualifies}>Generate ZK proof <ArrowRight size={16} /></button>
+                      <button onClick={runProof} disabled={!qualifies}>Generate scaffolded proof <ArrowRight size={16} /></button>
                     </div>
                   </div>
                   {!qualifies && <p className="hint">Raise your inputs until the score beats {policy.scoreThreshold}, or choose a lower policy tier.</p>}
@@ -202,14 +202,14 @@ export function ProofExperience() {
                 <motion.div key="proving" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="stage-content proving-stage">
                   <div className="proof-core">
                     <div className="proof-rings"><span /><span /><Fingerprint size={38} /></div>
-                    <span className="mono-label">NOIR / ULTRAHONK</span>
-                    <h3>Forging your proof</h3>
-                    <p>Proving your private score exceeds {policy.scoreThreshold} without revealing the score or any input.</p>
+                    <span className="mono-label">NOIR / ULTRAHONK SCAFFOLD</span>
+                    <h3>Preparing proof scaffold</h3>
+                    <p>Simulating the UltraHonk browser proof step for score above {policy.scoreThreshold}; real circuit artifacts are documented in the repo.</p>
                     <div className="proof-progress"><motion.i initial={{ width: "4%" }} animate={{ width: "100%" }} transition={{ duration: 2, ease: "easeInOut" }} /></div>
                     <div className="proof-steps">
                       <span><Check size={12} /> Witness encoded</span>
                       <span><Check size={12} /> Constraints satisfied</span>
-                      <span><LoaderCircle className="spin" size={12} /> Building UltraHonk proof</span>
+                      <span><LoaderCircle className="spin" size={12} /> Simulating UltraHonk proof</span>
                     </div>
                   </div>
                 </motion.div>
@@ -218,9 +218,9 @@ export function ProofExperience() {
               {stage === "verified" && record && envelope && (
                 <motion.div key="verified" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="stage-content verified-stage">
                   <motion.div className="success-seal" initial={{ scale: 0.6, rotate: -8 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring" }}><ShieldCheck size={38} /></motion.div>
-                  <span className="mono-label">{record.onChain ? "VERIFIED ON STELLAR TESTNET" : "VERIFIED · STELLAR TESTNET (LOCAL DEMO)"}</span>
-                  <h3>Reputation verified. Privacy preserved.</h3>
-                  <p>The verifier learned one thing: your score is above {policy.scoreThreshold}.<br />Every private value has been removed from this session.</p>
+                  <span className="mono-label">{record.onChain ? "SUBMITTED ON STELLAR TESTNET" : HAS_LIVE_CONTRACTS ? "SCAFFOLDED PROOF · LIVE TESTNET CONTRACTS" : "SCAFFOLDED PROOF · LOCAL DEMO"}</span>
+                  <h3>Credential ready. Privacy preserved.</h3>
+                  <p>This demo reveals only one claim: your score is above {policy.scoreThreshold}.<br />Every private value has been removed from this session.</p>
                   <StellarVerificationPanel record={record} envelope={envelope} />
                   <button onClick={() => setStage("credential")}>Issue ForgePass Credential <ArrowRight size={16} /></button>
                 </motion.div>
@@ -279,7 +279,7 @@ function ConnectGate() {
 
 function StellarVerificationPanel({ record, envelope }: { record: VerificationRecord; envelope: ProofEnvelope }) {
   const rows: [string, React.ReactNode][] = [
-    ["Status", <b key="s" className="ok"><Check size={12} /> {record.status}</b>],
+    ["Proof flow", <b key="s" className="ok"><Check size={12} /> {record.status}</b>],
     ["Network", record.network],
     ["Wallet", `${record.holder.slice(0, 6)}…${record.holder.slice(-4)}`],
     ["Timestamp", new Date(record.timestamp).toUTCString()],
@@ -296,13 +296,16 @@ function StellarVerificationPanel({ record, envelope }: { record: VerificationRe
     ["Registry", HAS_LIVE_CONTRACTS
       ? <a key="r" href={explorerContract(record.registryContract)} target="_blank" rel="noreferrer">{shortId(record.registryContract)} ↗</a>
       : `${shortId(record.registryContract)} (placeholder)`],
+    ["Native UltraHonk", HAS_NATIVE_ULTRAHONK_VERIFIER
+      ? <a key="u" href={explorerContract(CONTRACTS.nativeUltraHonkVerifier)} target="_blank" rel="noreferrer">{shortId(CONTRACTS.nativeUltraHonkVerifier)} ↗</a>
+      : "Not deployed for this build"],
     ["Disclosed", <b key="d" className="zero">0 private values</b>],
   ];
   return (
     <div className="verify-panel">
       <div className="verify-panel-head">
         <ShieldCheck size={15} /> Stellar Verification Record
-        <span className={record.onChain ? "tag live" : "tag demo"}>{record.onChain ? "On-chain" : "Demo"}</span>
+        <span className={record.onChain ? "tag live" : "tag demo"}>{record.onChain ? "On-chain" : HAS_LIVE_CONTRACTS ? "Contracts live · tx scaffolded" : "Demo"}</span>
       </div>
       <div className="verify-grid">
         {rows.map(([k, v]) => (<div key={k}><span>{k}</span><div>{v}</div></div>))}
@@ -310,7 +313,7 @@ function StellarVerificationPanel({ record, envelope }: { record: VerificationRe
       <div className="verify-explorer">
         {record.onChain ? (
           <a className="explorer-link" href={explorerTx(record.txHash)} target="_blank" rel="noreferrer">
-            <ShieldCheck size={14} /> View on Stellar Testnet ↗
+            <ShieldCheck size={14} /> View in Stellar Expert Testnet Explorer ↗
           </a>
         ) : (
           <span className="explorer-link disabled" aria-disabled="true">
@@ -319,7 +322,7 @@ function StellarVerificationPanel({ record, envelope }: { record: VerificationRe
         )}
       </div>
       {!record.onChain && (
-        <p className="verify-note">Ledger and transaction hash are deterministic simulations. The Noir circuits and Soroban verifier source are real; browser-side UltraHonk proving and Testnet submission are scaffolded. See docs/SECURITY.md.</p>
+        <p className="verify-note">Ledger and transaction hash are deterministic simulations. The Noir circuits and Soroban verifier source are real; browser-side UltraHonk proving and Testnet submission are scaffolded until a native UltraHonk verifier contract ID is configured. See docs/SECURITY.md.</p>
       )}
     </div>
   );
@@ -375,14 +378,14 @@ function CredentialStage({ record, envelope, policyName, claims, holder, network
       <div className="passport-copy">
         <span>STEP 5 OF 5</span>
         <h3>Your reputation is now portable.</h3>
-        <p>Share proof of qualification with any participating institution. They see verified claims — never the data behind them.</p>
+        <p>Share proof-style qualification claims with any participating institution. They see true/false claims — never the data behind them.</p>
         <div className="cred-actions">
           <button onClick={share} title="Open the ForgePass credential link"><Share2 size={14} /> Share Credential</button>
           <button onClick={copy}>{copied ? <><Check size={14} /> Copied</> : <><Copy size={14} /> Copy credential link</>}</button>
           <button onClick={() => setShowQr((v) => !v)}><Link2 size={14} /> QR code</button>
           {record.onChain ? (
             <a className="cred-action-link" href={explorerTx(record.txHash)} target="_blank" rel="noreferrer" title="Open the on-chain transaction on Stellar Expert">
-              <ShieldCheck size={14} /> View on Stellar Testnet ↗
+              <ShieldCheck size={14} /> View in Stellar Expert Testnet Explorer ↗
             </a>
           ) : (
             <span className="cred-action-link disabled" title="No on-chain transaction was submitted in this demo run">
@@ -420,12 +423,12 @@ function CredentialStage({ record, envelope, policyName, claims, holder, network
         </div>
         <div className="passport-proof"><span>Proof</span><code>{shortHash(envelope.proofCommitment)}</code></div>
         <div className="passport-foot">
-          <span><ShieldCheck size={14} /> Verified on Stellar</span>
+          <span><ShieldCheck size={14} /> {record.onChain ? "On-chain verified" : HAS_LIVE_CONTRACTS ? "Contracts live · proof scaffolded" : "Demo credential"}</span>
           <span>{id}</span>
         </div>
       </motion.div>
 
-      <p className="cred-privacy"><LockKeyhole size={13} /> No private financial information is stored or revealed. This credential contains only verified true/false claims.</p>
+      <p className="cred-privacy"><LockKeyhole size={13} /> No private financial information is stored or revealed. This credential contains only true/false qualification claims.</p>
     </motion.div>
   );
 }

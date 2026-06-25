@@ -44,8 +44,8 @@ use, and writes deployable binaries plus `SHA256SUMS` to `artifacts/soroban/`.
 ## Verified artifacts
 
 ```text
-65acbea6aeabe7a35c429e27d47212cb96c7da4c8e8228b46708e039f55ff573  forgepass_verifier.wasm
-c9a0fcf923b1a9b41ef8962fb0159d5e657bdee5fb96f8d0a74d91a71593e2dd  forgepass_registry.wasm
+feb99d3b55bb420d16c3d458e6e591a3dee61f83b72ee0a03927a77fe8e3e089  forgepass_verifier.wasm
+d61a5397e8df843ddc54507b61847737f40d7ac70bafb69fca18bfc0ea7aac36  forgepass_registry.wasm
 ```
 
 These hashes identify the local release build. Rebuilding from the pinned source

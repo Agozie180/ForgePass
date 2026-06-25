@@ -7,10 +7,10 @@
  * deployed mainnet activity). See docs/SECURITY.md.
  */
 export const STELLAR_NETWORK = {
-  name: "Testnet",
+  name: process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? "Testnet",
   passphrase: "Test SDF Network ; September 2015",
   horizon: "https://horizon-testnet.stellar.org",
-  rpc: "https://soroban-testnet.stellar.org",
+  rpc: process.env.NEXT_PUBLIC_STELLAR_RPC_URL ?? "https://soroban-testnet.stellar.org",
   explorer: "https://stellar.expert/explorer/testnet",
 } as const;
 
@@ -22,12 +22,15 @@ export const CONTRACTS = {
   registry:
     process.env.NEXT_PUBLIC_FORGEPASS_REGISTRY_ID ??
     "CAFORGEPASSREGISTRY000000000000000000000000000000000DEMO",
+  nativeUltraHonkVerifier: process.env.NEXT_PUBLIC_FORGEPASS_NATIVE_ULTRAHONK_CONTRACT_ID ?? "",
 } as const;
 
 /** True when real on-chain contract IDs have been provided via env. */
 export const HAS_LIVE_CONTRACTS =
   Boolean(process.env.NEXT_PUBLIC_FORGEPASS_VERIFIER_ID) &&
   Boolean(process.env.NEXT_PUBLIC_FORGEPASS_REGISTRY_ID);
+
+export const HAS_NATIVE_ULTRAHONK_VERIFIER = Boolean(process.env.NEXT_PUBLIC_FORGEPASS_NATIVE_ULTRAHONK_CONTRACT_ID);
 
 export function shortId(id: string, lead = 6, tail = 4): string {
   if (id.length <= lead + tail) return id;

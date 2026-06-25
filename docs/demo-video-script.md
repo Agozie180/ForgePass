@@ -44,20 +44,18 @@ light theme. Recommended companion stills live in `docs/screenshots/`.
 
 ## 1:25 — 1:45 · The proof (WOW moment)
 
-> "Now ForgePass forges a zero-knowledge proof with Noir and UltraHonk… and watch:
+> "Now ForgePass previews the Noir and UltraHonk proof step… and watch:
 > every private value disappears."
 
-- Click **Generate ZK proof**; let the Noir / UltraHonk animation complete.
+- Click **Generate scaffolded proof**; let the Noir / UltraHonk scaffold animation complete.
 - Land on **"Reputation verified. Privacy preserved."**
 - Screenshot: `proof-generation.png`.
 
 ## 1:45 — 2:05 · Stellar verification
 
-> "Stellar now holds a replay-safe verification record — network, ledger, proof
-> commitment, nullifier, verifier and registry contracts — and zero private
-> values. Simulated values are labeled honestly."
+> "ForgePass is live on Stellar Testnet with deployed verifier and registry contracts. The demo shows the replay-safe verification record — network, commitments, nullifier, and contract links — while scaffolded proof-generation and transaction values are labeled honestly."
 
-- Pan over the **Stellar Verification Record** panel.
+- Pan over the **Stellar Verification Record** panel and click the verifier/registry explorer links.
 - Screenshot: `stellar-verification.png`.
 
 ## 2:05 — 2:25 · The credential
@@ -83,5 +81,5 @@ light theme. Recommended companion stills live in `docs/screenshots/`.
 - [ ] Browser zoom 100%, window ≥ 1440px wide (desktop layout).
 - [ ] Freighter installed + set to **Testnet** for the wallet segment.
 - [ ] Pre-set sliders so the score lands on a clean **91** for the hero take.
-- [ ] Show at least one **"(simulated)"** label to reinforce honesty.
+- [ ] Show the **Live on Stellar Testnet** contract IDs, then show at least one **"simulated/scaffolded"** label to reinforce honesty.
 - [ ] Re-run once in **Demo Mode** to prove the flow works without an extension.

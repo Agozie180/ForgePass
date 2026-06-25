@@ -256,7 +256,7 @@ bytes, wallet balances, financial inputs, scores and source payloads.
 |  ZK financial verification on Stellar.      [proof visual]    |
 |  [Launch ForgePass] [Watch the flow]                           |
 |                                                               |
-|  PRIVATE INPUTS  ->  ZERO-KNOWLEDGE  ->  VERIFIED ON STELLAR  |
+|  PRIVATE INPUTS  ->  ZK SCAFFOLD  ->  LIVE TESTNET CONTRACTS  |
 +---------------------------------------------------------------+
 ```
 
@@ -270,7 +270,7 @@ bytes, wallet balances, financial inputs, scores and source payloads.
 | Passport           | Private vault          Proof terminal     |
 | Eligibility        | Income       $8,000     Building witness   |
 |                    | Balance      $3,000     Generating proof   |
-|                    | Transactions 120        Stellar verified   |
+|                    | Transactions 120        Tx scaffolded   |
 |                    | Age          18 mo                         |
 |                    | [Generate private score]                  |
 +-------------------+-------------------------------------------+
@@ -290,7 +290,7 @@ green `Reputation Qualified` receipt. The credential then assembles claim by cla
 | [x] Balance threshold verified   |
 | [x] Account age verified         |
 | [x] Transaction activity verified|
-| Verified on Stellar Testnet       |
+| Live Testnet contracts linked       |
 +-----------------------------------+
 ```
 
@@ -299,7 +299,7 @@ green `Reputation Qualified` receipt. The credential then assembles claim by cla
 ```mermaid
 stateDiagram-v2
     [*] --> Created
-    Created --> Active: first verified claim
+    Created --> Active: first qualified claim
     Active --> Active: append or renew claim
     Active --> PartiallyExpired: claim expires
     PartiallyExpired --> Active: claim renewed

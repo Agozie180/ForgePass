@@ -1,4 +1,4 @@
-import { CONTRACTS, HAS_LIVE_CONTRACTS, STELLAR_NETWORK } from "@/lib/stellar/config";
+import { CONTRACTS, STELLAR_NETWORK } from "@/lib/stellar/config";
 import type { Policy } from "@/lib/domain/policies";
 import type { ScoreBreakdown, TrustInputs } from "@/lib/domain/trust-score";
 
@@ -10,8 +10,8 @@ import type { ScoreBreakdown, TrustInputs } from "@/lib/domain/trust-score";
  * value is ever hashed in a way that could be inverted to recover it, and no
  * private value is included in the returned envelope.
  *
- * What is SIMULATED here: the UltraHonk proving + on-chain Soroban verification
- * round-trip. The Noir circuits (circuits/) and the Soroban verifier
+ * What is SIMULATED here: the UltraHonk proving + Soroban transaction
+ * submission round-trip. The Noir circuits (circuits/) and the Soroban verifier
  * (contracts/) are real and compiled, but generating a browser-side UltraHonk
  * proof and submitting a Testnet transaction is out of scope for the demo. The
  * UI labels every simulated value. See docs/SECURITY.md.
@@ -39,7 +39,7 @@ export type ProofEnvelope = {
 };
 
 export type VerificationRecord = {
-  status: "Verified";
+  status: "Scaffolded";
   network: string;
   networkPassphrase: string;
   holder: string;
@@ -52,7 +52,7 @@ export type VerificationRecord = {
   verifierContract: string;
   registryContract: string;
   explorer: string;
-  /** True only when real on-chain contracts + submission are wired. */
+  /** True only after a real proof transaction is submitted. Contract links can be live while this remains false. */
   onChain: boolean;
 };
 
@@ -90,7 +90,7 @@ export async function buildVerificationRecord(
   const ledger = 14_800_000 + (seed % 200_000);
   const txHash = await sha256Hex(`tx|${envelope.proofCommitment}|${nowIso}`);
   return {
-    status: "Verified",
+    status: "Scaffolded",
     network: STELLAR_NETWORK.name,
     networkPassphrase: STELLAR_NETWORK.passphrase,
     holder,
@@ -100,7 +100,7 @@ export async function buildVerificationRecord(
     verifierContract: CONTRACTS.verifier,
     registryContract: CONTRACTS.registry,
     explorer: STELLAR_NETWORK.explorer,
-    onChain: HAS_LIVE_CONTRACTS,
+    onChain: false,
   };
 }
 

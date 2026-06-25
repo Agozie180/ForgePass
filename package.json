@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "verify:live": "node scripts/verify-live-testnet.mjs"
   },
   "dependencies": {
     "@stellar/freighter-api": "^4.1.0",
