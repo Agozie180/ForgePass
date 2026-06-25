@@ -62,7 +62,7 @@ revealed.*
 | 0-7s | Landing headline, slow push-in | "Trust online still requires exposure." |
 | 7-16s | Editable private signals | "ForgePass turns private financial signals into proof." |
 | 16-24s | Score resolves to 91 | "A private reputation score is computed locally." |
-| 24-35s | Noir / UltraHonk proof animation | "Zero knowledge proves only the required predicate." |
+| 24-35s | Noir / UltraHonk scaffold animation | "Zero knowledge proves only the required predicate." |
 | 35-44s | Values blur and disappear | "The score and every input vanish." |
 | 44-52s | Stellar verification record | "Stellar anchors a replay-safe verification." |
 | 52-60s | Credential assembles | "Forge trust. Reveal nothing." |

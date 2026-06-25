@@ -261,3 +261,15 @@ a.cred-action-link:hover { background:#d6f9e6; }
   .demo-steps { grid-template-columns:1fr; }
   .footer { align-items:flex-start; flex-direction:column; gap:18px; padding:32px 0; }
 }
+
+/* ---- Why ZK + Stellar ---- */
+.why-section { padding:92px 0 30px; }
+.why-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.why-grid article { padding:24px; background:#fff; border:1px solid var(--line); border-radius:8px; }
+.why-grid span { font:700 9px var(--font-mono); letter-spacing:.08em; text-transform:uppercase; color:#2a8b5d; }
+.why-grid h3 { margin:12px 0 14px; font-size:24px; line-height:1.12; letter-spacing:-.03em; font-weight:560; }
+.why-grid ul { margin:0; padding-left:18px; color:#637069; font-size:13px; line-height:1.7; }
+
+@media (max-width: 980px) {
+  .why-grid { grid-template-columns:1fr; }
+}

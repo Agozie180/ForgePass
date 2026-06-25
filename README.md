@@ -1,28 +1,55 @@
 # ForgePass
 
-**Forge Trust. Reveal Nothing.**
+**Private financial reputation credentials on Stellar. Prove trust. Reveal nothing.**
 
-ForgePass is a **zero-knowledge reputation credential built on Stellar**. It lets
-a person prove financial credibility — *"my reputation score is above 80"* —
-without revealing their income, balance, account age, transaction activity, or
-the score itself. The verifier learns exactly one thing: **true** or **false**.
+ForgePass lets a person prove they satisfy a financial trust policy, for example **"my reputation score is above 80"**, without revealing the private inputs behind that result: income, balance, account age, transaction activity, consistency, or even the exact score.
+
+The verifier gets one useful answer: **qualified / not qualified**. The holder keeps the data.
 
 > Live demo: https://forge-pass.vercel.app/
 
-## Hackathon submission snapshot
+## What Judges Should Understand In 30 Seconds
 
-ForgePass is **an honest, deployed Stellar Testnet vertical slice with real circuits/contracts and transparent proof-generation scaffolding**.
+- **What it does:** ForgePass turns private financial signals into a portable reputation credential.
+- **Why ZK is essential:** without zero-knowledge proofs, the user must expose raw financial data to earn trust. With ZK, the user proves only the policy result.
+- **Why Stellar:** Stellar gives the credential wallet binding, low-cost public verification rails, fast settlement, and Soroban contracts for replay protection and registry state.
+- **What is live:** ForgePass verifier and registry contracts are deployed on Stellar Testnet and can be inspected in Stellar Expert.
+- **What is scaffolded:** browser UltraHonk proof generation, frontend transaction submission, and the native VK-backed UltraHonk verifier contract are not claimed as complete until the required Barretenberg artifacts and contract ID are configured.
 
-### Judge Verification Checklist
+## Judge Verification Checklist
 
-- Open the app and confirm the hero message: **Private financial reputation credentials on Stellar. Prove trust. Reveal nothing.**
-- Confirm the **Live on Stellar Testnet** section lists both contract IDs and explorer links.
-- Run the Proof Studio with Freighter on Testnet or labeled Demo Mode.
-- Confirm private inputs disappear before the credential screen.
-- Confirm proof-generation and transaction values are labeled simulated/scaffolded honestly.
-- Review `circuits/`, `contracts/`, and `docs/BUILD.md` for reproducible circuit/contract artifacts.
+1. Open the app and read the hero: **Private financial reputation credentials on Stellar. Prove trust. Reveal nothing.**
+2. Run the Proof Studio with Freighter on Testnet or labeled Demo Mode.
+3. Enter private income, balance, account age, activity, and consistency.
+4. Confirm the score is computed locally and only the threshold claim continues.
+5. Confirm the live Stellar Testnet contract IDs and Stellar Expert links are visible.
+6. Confirm simulated/scaffolded proof-generation and transaction values are labeled honestly.
+7. Run `npm run verify:live` to confirm the deployed Soroban contracts exist on Testnet.
 
-### Live Deployment
+## Why Zero-Knowledge Is The Point
+
+Financial reputation normally requires over-disclosure. A lender, marketplace, or membership app may only need to know whether someone qualifies, but today it often asks for bank statements, income documents, balances, transaction histories, and exact scores.
+
+ForgePass changes the trust primitive:
+
+```text
+Old flow: disclose private data -> verifier decides whether to trust you
+ForgePass: keep data private -> prove the policy result -> share the credential
+```
+
+The Noir circuit is the enforceable rule: recompute the reputation predicate and prove `score > threshold` without revealing the witnesses. The public outputs are commitments, holder binding, nullifier, policy metadata, and the boolean result. That is why ZK is not decoration here; it is the privacy boundary.
+
+## Why Stellar Is The Right Chain
+
+ForgePass needs a public network that can make credentials portable without making them expensive or slow to check. Stellar fits because:
+
+- **Wallet identity:** credentials can bind to Stellar accounts instead of app-specific accounts.
+- **Soroban contracts:** verifier and registry contracts can consume nullifiers, prevent replay, emit events, and manage credential state.
+- **Low fees and fast finality:** financial reputation checks can happen repeatedly without turning verification into a cost center.
+- **Stellar Expert transparency:** judges and integrators can inspect deployed Testnet contracts directly.
+- **Financial alignment:** Stellar already targets payments, wallets, ramps, and real-world financial access, which matches ForgePass's credential use case.
+
+## Live Stellar Testnet Deployment
 
 - Network: **Stellar Testnet**
 - RPC: `https://soroban-testnet.stellar.org`
@@ -31,65 +58,52 @@ ForgePass is **an honest, deployed Stellar Testnet vertical slice with real circ
 - Verifier explorer: https://stellar.expert/explorer/testnet/contract/CCNNXYINWM3QNC3HNKOU66XCJP5GJMZYMSMXYBZALT4U24AXN6RAPXNF
 - Registry explorer: https://stellar.expert/explorer/testnet/contract/CABRLKSOTTR3YSMXQUPLTBR3QBDIOC5SLPIIX7VI2JPLLTHWL4BQBDOT
 
-The contracts currently provide the deployed Soroban surface for a replay-safe verifier receipt flow and holder credential registry. `ForgePassVerifier` consumes nullifiers and enforces verifier/holder authorization, expiry, pause, and replay checks. `ForgePassRegistry` creates holder passports, registers claims, and supports revocation.
+The deployed contracts currently provide the Soroban surface for replay-safe verifier receipts and holder credential registry state:
 
-### Environment Variables
+- `ForgePassVerifier` consumes nullifiers, enforces verifier/holder authorization, expiry, pause, and replay checks.
+- `ForgePassRegistry` creates holder passports, registers claims, and supports revocation.
 
-The repo uses these public Next.js variables:
+Run the live check:
 
 ```bash
-NEXT_PUBLIC_STELLAR_NETWORK=Testnet
-NEXT_PUBLIC_STELLAR_RPC_URL=https://soroban-testnet.stellar.org
-NEXT_PUBLIC_FORGEPASS_VERIFIER_ID=CCNNXYINWM3QNC3HNKOU66XCJP5GJMZYMSMXYBZALT4U24AXN6RAPXNF
-NEXT_PUBLIC_FORGEPASS_REGISTRY_ID=CABRLKSOTTR3YSMXQUPLTBR3QBDIOC5SLPIIX7VI2JPLLTHWL4BQBDOT
+npm run verify:live
 ```
 
-> If copying manually, use the values from `.env.example` or `.env.local`; both contract IDs must be set for the UI to switch into live-contract mode.
+## Native UltraHonk Status
 
-### Demo Script
+ForgePass is designed for native on-chain UltraHonk verification, but the current deployed Testnet verifier is the replay-safe receipt contract, not yet the VK-backed native verifier. Native deployment requires:
+
+- UltraHonk verification key for `circuits/trust_score_proof`.
+- UltraHonk proof bytes for the canonical witness.
+- Public inputs encoded for the Soroban verifier contract.
+- A Soroban verifier Wasm built from the `rs-soroban-ultrahonk` interface with the verification key fixed at deploy time.
+
+After deploying that contract, set:
+
+```bash
+NEXT_PUBLIC_FORGEPASS_NATIVE_ULTRAHONK_CONTRACT_ID=<native verifier contract id>
+```
+
+Then `npm run verify:live` will verify all three Testnet contracts and the UI will show the native verifier explorer link.
+
+## Demo Flow
 
 1. Connect wallet or use Demo Mode.
 2. Enter private financial inputs.
-3. Generate the private trust score.
-4. Create the credential.
-5. Anchor/verify against the Stellar Testnet deployment surface.
+3. Compute the private trust score locally.
+4. Generate the ZK predicate scaffold.
+5. Inspect live Stellar Testnet contract links.
 6. Export/share the credential.
 
 A longer recording script lives at [`docs/demo-video-script.md`](docs/demo-video-script.md), with a shorter live walkthrough in [`docs/DEMO.md`](docs/DEMO.md).
 
-### Known Limitations
+## What Is Real vs Scaffolded
 
-- Browser-side UltraHonk proof generation is scaffolded in the demo UI.
-- Frontend Testnet transaction submission and full native on-chain proof verification are not yet wired.
-- ForgePass proves a predicate over supplied data. In production, data truth comes from signed attestations by banks, payroll providers, employers, or trusted issuers.
-- The reputation model is a transparent demo model, not a production credit score.
-- No production-readiness, audit, lending, KYC, or compliance claim is made.
+**Real:** frontend Proof Studio, deterministic reputation scoring model, Noir circuits/tests, Soroban verifier/registry contracts, committed Soroban Wasm artifacts, and verified Stellar Testnet deployments.
 
-### Roadmap
+**Scaffolded:** browser UltraHonk proof generation, frontend transaction submission, and native VK-backed UltraHonk verification until the Barretenberg artifacts and native verifier contract are deployed.
 
-- Wire real browser/server proof generation from the Noir circuits and Barretenberg artifacts.
-- Deploy a VK-backed native UltraHonk verifier contract and set `NEXT_PUBLIC_FORGEPASS_NATIVE_ULTRAHONK_CONTRACT_ID`.
-- Add signed source attestations from banks, payroll providers, employers, and trusted issuers.
-- Add independent circuit, contract, and frontend audits.
-- Expand credential presentation and verifier integrations.
-
-### What Judges Should Test
-
-- The no-extension Demo Mode and the Freighter Testnet connection path.
-- Policy selection, private input sliders, score calculation, and threshold qualification.
-- Proof animation labels and the Stellar Verification Record panel.
-- Contract ID explorer links and environment-driven live-contract status.
-- Credential export, share, copy-link, and QR-code actions.
-
-ForgePass is the intersection of the two official Stellar hackathon tracks:
-
-- **Verifiable off-chain computation** — a reputation score is computed locally
-  and proven correct with a Noir circuit.
-- **Private credential / reputation** — the proof verification path targets Stellar and a
-  privacy-preserving credential is issued.
-
----
-
+**Production requirement:** ForgePass proves a predicate over supplied data. In production, data truth comes from signed attestations by banks, payroll providers, employers, or trusted issuers.
 ## The problem
 
 Every financial application asks people to *surrender data to earn trust*: upload
@@ -125,13 +139,13 @@ flowchart LR
   subgraph Device["Holder device (private)"]
     D["Private signals"] --> S["Demo Reputation Model<br/>(off-chain compute)"]
     S --> N["Noir circuit<br/>score &gt; threshold"]
-    N --> P["UltraHonk proof"]
+    N --> P["UltraHonk proof scaffold"]
   end
   subgraph Stellar["Stellar Testnet"]
     V["ForgePassVerifier<br/>(Soroban)"] --> R["ForgePassRegistry<br/>(Soroban)"]
   end
-  P --> V
-  R --> C["ForgePass Reputation Credential<br/>(verified claims only)"]
+  P -. scaffolded tx path .-> V
+  R --> C["ForgePass Reputation Credential<br/>(qualification claims only)"]
 ```
 
 | Layer | Technology | Role |
@@ -140,7 +154,7 @@ flowchart LR
 | Wallet | `@stellar/freighter-api` + Demo Mode | Real Testnet address or simulated session |
 | Off-chain compute | `lib/domain` | Deterministic reputation model + canonical vectors |
 | Circuits | Noir (`v1.0.0-beta.22`) | Five threshold predicates incl. flagship score circuit |
-| Proof system | UltraHonk | Succinct zero-knowledge proof |
+| Proof system target | UltraHonk | Succinct ZK proof path; browser generation scaffolded until Barretenberg artifacts are wired |
 | Verification surface | Soroban (Rust, `wasm32v1-none`) | Live replay-safe verifier + credential registry contracts; native UltraHonk tx path next |
 | Commitments | Web Crypto SHA-256 | Public-input commitment, holder binding, nullifier |
 

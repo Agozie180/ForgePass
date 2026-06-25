@@ -44,10 +44,10 @@ light theme. Recommended companion stills live in `docs/screenshots/`.
 
 ## 1:25 — 1:45 · The proof (WOW moment)
 
-> "Now ForgePass previews the Noir and UltraHonk proof step… and watch:
+> "Now ForgePass previews the Noir circuit and UltraHonk proof scaffold… and watch:
 > every private value disappears."
 
-- Click **Generate scaffolded proof**; let the Noir / UltraHonk scaffold animation complete.
+- Click **Generate ZK predicate scaffold**; let the Noir / UltraHonk scaffold animation complete.
 - Land on **"Reputation verified. Privacy preserved."**
 - Screenshot: `proof-generation.png`.
 

@@ -15,7 +15,7 @@ import { DEMO_ADDRESS, useWallet } from "@/components/wallet-provider";
 
 type Stage = "data" | "score" | "proving" | "verified" | "credential";
 const stageOrder: Stage[] = ["data", "score", "proving", "verified", "credential"];
-const stageLabels = ["Private data", "Reputation", "ZK proof", "Stellar", "Credential"];
+const stageLabels = ["Private data", "Local score", "ZK predicate", "Stellar", "Credential"];
 
 const FIELDS: { key: keyof TrustInputs; label: string; prefix?: string; suffix?: string; max: number; step: number }[] = [
   { key: "monthlyIncomeUsd", label: "Monthly income", prefix: "$", max: 20_000, step: 250 },
@@ -118,7 +118,7 @@ export function ProofExperience() {
               {stage === "data" && (
                 <motion.div key="data" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, filter: "blur(16px)", scale: 0.97 }} className="stage-content">
                   <div className="stage-title">
-                    <div><span>STEP 1 OF 5</span><h3>Enter your private signals</h3><p>These values stay in this browser. They are never uploaded, stored, or written on-chain.</p></div>
+                    <div><span>STEP 1 OF 5</span><h3>Enter private financial signals</h3><p>These numbers are the sensitive data ForgePass is designed to protect. They stay in this browser and are never uploaded or written on-chain.</p></div>
                     <div className="secure-badge"><LockKeyhole size={14} /> Computed locally</div>
                   </div>
 
@@ -165,7 +165,7 @@ export function ProofExperience() {
               {stage === "score" && score && (
                 <motion.div key="score" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, y: -10 }} className="stage-content score-stage">
                   <div className="stage-title">
-                    <div><span>STEP 2 OF 5</span><h3>Your private reputation score</h3><p>Computed locally from your inputs. It will never be published — only the statement “above {policy.scoreThreshold}” is proven.</p></div>
+                    <div><span>STEP 2 OF 5</span><h3>Compute the score locally</h3><p>The score is useful for the holder, but the verifier does not need it. The claim is only “above {policy.scoreThreshold}”.</p></div>
                     <div className="secure-badge"><LockKeyhole size={14} /> Visible only to you</div>
                   </div>
                   <div className="score-layout">
@@ -188,10 +188,10 @@ export function ProofExperience() {
                     </div>
                   </div>
                   <div className="action-row">
-                    <p><LockKeyhole size={16} /> Only the boolean “above {policy.scoreThreshold}” leaves this device</p>
+                    <p><LockKeyhole size={16} /> ZK turns the score into a predicate: “above {policy.scoreThreshold}”</p>
                     <div className="action-buttons">
                       <button className="ghost" onClick={() => setStage("data")}>Edit inputs</button>
-                      <button onClick={runProof} disabled={!qualifies}>Generate scaffolded proof <ArrowRight size={16} /></button>
+                      <button onClick={runProof} disabled={!qualifies}>Generate ZK predicate scaffold <ArrowRight size={16} /></button>
                     </div>
                   </div>
                   {!qualifies && <p className="hint">Raise your inputs until the score beats {policy.scoreThreshold}, or choose a lower policy tier.</p>}
@@ -203,13 +203,13 @@ export function ProofExperience() {
                   <div className="proof-core">
                     <div className="proof-rings"><span /><span /><Fingerprint size={38} /></div>
                     <span className="mono-label">NOIR / ULTRAHONK SCAFFOLD</span>
-                    <h3>Preparing proof scaffold</h3>
-                    <p>Simulating the UltraHonk browser proof step for score above {policy.scoreThreshold}; real circuit artifacts are documented in the repo.</p>
+                    <h3>Preparing the ZK predicate</h3>
+                    <p>The Noir circuit defines the policy result without exposing private inputs. This browser demo scaffolds the UltraHonk proof step while keeping the real circuit artifacts visible in the repo.</p>
                     <div className="proof-progress"><motion.i initial={{ width: "4%" }} animate={{ width: "100%" }} transition={{ duration: 2, ease: "easeInOut" }} /></div>
                     <div className="proof-steps">
                       <span><Check size={12} /> Witness encoded</span>
                       <span><Check size={12} /> Constraints satisfied</span>
-                      <span><LoaderCircle className="spin" size={12} /> Simulating UltraHonk proof</span>
+                      <span><LoaderCircle className="spin" size={12} /> Simulating UltraHonk proof scaffold</span>
                     </div>
                   </div>
                 </motion.div>
@@ -220,7 +220,7 @@ export function ProofExperience() {
                   <motion.div className="success-seal" initial={{ scale: 0.6, rotate: -8 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring" }}><ShieldCheck size={38} /></motion.div>
                   <span className="mono-label">{record.onChain ? "SUBMITTED ON STELLAR TESTNET" : HAS_LIVE_CONTRACTS ? "SCAFFOLDED PROOF · LIVE TESTNET CONTRACTS" : "SCAFFOLDED PROOF · LOCAL DEMO"}</span>
                   <h3>Credential ready. Privacy preserved.</h3>
-                  <p>This demo reveals only one claim: your score is above {policy.scoreThreshold}.<br />Every private value has been removed from this session.</p>
+                  <p>The only claim carried forward is: score above {policy.scoreThreshold}.<br />The raw inputs and exact score are gone; the Stellar contract links remain inspectable.</p>
                   <StellarVerificationPanel record={record} envelope={envelope} />
                   <button onClick={() => setStage("credential")}>Issue ForgePass Credential <ArrowRight size={16} /></button>
                 </motion.div>
@@ -378,7 +378,7 @@ function CredentialStage({ record, envelope, policyName, claims, holder, network
       <div className="passport-copy">
         <span>STEP 5 OF 5</span>
         <h3>Your reputation is now portable.</h3>
-        <p>Share proof-style qualification claims with any participating institution. They see true/false claims — never the data behind them.</p>
+        <p>Share eligibility claims with any participating institution. They see the policy result and credential metadata, never the income, balance, activity, or score.</p>
         <div className="cred-actions">
           <button onClick={share} title="Open the ForgePass credential link"><Share2 size={14} /> Share Credential</button>
           <button onClick={copy}>{copied ? <><Check size={14} /> Copied</> : <><Copy size={14} /> Copy credential link</>}</button>

@@ -4,9 +4,9 @@ import { CONTRACTS, HAS_NATIVE_ULTRAHONK_VERIFIER, STELLAR_NETWORK, explorerCont
 import { WalletButton } from "@/components/wallet-button";
 
 const signals = [
-  { icon: LockKeyhole, title: "Private by design", text: "Income, balance and score are computed in-browser and never leave your device." },
-  { icon: ShieldCheck, title: "Live Stellar contracts", text: "Soroban verifier and registry contracts are deployed on Testnet; proof submission is labeled scaffolded." },
-  { icon: Sparkles, title: "Portable credential", text: "One ForgePass credential. Many eligibility moments — lending, marketplaces, membership." },
+  { icon: LockKeyhole, title: "What it does", text: "ForgePass turns private financial signals into a shareable reputation credential." },
+  { icon: ShieldCheck, title: "Why ZK matters", text: "The verifier learns only the policy result, not the income, balance, activity, or score." },
+  { icon: Sparkles, title: "Why Stellar fits", text: "Stellar gives the credential low-cost public rails, wallet binding, and Soroban contracts." },
 ];
 
 const deploymentFacts = [
@@ -19,17 +19,29 @@ const deploymentFacts = [
 
 const truthRows = [
   { label: "Real", items: ["Frontend Proof Studio", "Reputation scoring model", "Noir circuits and tests", "Soroban verifier and registry contracts", "Verified Stellar Testnet deployments"] },
-  { label: "Simulated / scaffolded", items: ["Browser-side UltraHonk proof generation", "Frontend Testnet transaction submission", "Full on-chain native proof verification transaction"] },
+  { label: "Simulated / scaffolded", items: ["Browser-side UltraHonk proof generation", "Frontend Testnet transaction submission", "VK-backed native UltraHonk verifier contract"] },
   { label: "Next", items: ["Real proof generation", "Signed bank, payroll, employer, or oracle attestations", "Independent audits"] },
 ];
 
-const demoSteps = ["Connect wallet or use Demo Mode", "Enter private financial inputs", "Generate private trust score", "Create credential", "Review live Testnet contract links", "Export or share credential"];
+const demoSteps = ["Connect wallet or use Demo Mode", "Enter private income, balance, and activity", "Compute the score locally", "Generate the ZK predicate scaffold", "Inspect live Stellar Testnet contracts", "Export or share the credential"];
+
+const zkReasons = [
+  "Financial trust checks usually expose too much raw data.",
+  "ForgePass only needs to prove a predicate, such as score > 80.",
+  "The circuit binds the policy, holder, nullifier, and result so the claim can be checked without revealing private inputs.",
+];
+
+const stellarReasons = [
+  "Stellar accounts bind credentials to wallets judges can inspect on Testnet.",
+  "Soroban contracts provide replay protection, registry state, events, and upgradeable verification surfaces.",
+  "Low fees and fast finality make repeated credential checks practical for real financial workflows.",
+];
 
 const pipeline = [
   { icon: LockKeyhole, label: "Private data", note: "Income · balance · age · activity" },
   { icon: Cpu, label: "Off-chain compute", note: "Demo Reputation Model · local" },
   { icon: Binary, label: "Noir circuit", note: "Predicate: score > threshold" },
-  { icon: Fingerprint, label: "UltraHonk proof", note: "Browser step scaffolded" },
+  { icon: Fingerprint, label: "UltraHonk scaffold", note: "Proof path explicit" },
   { icon: ShieldCheck, label: "Soroban contracts", note: "Verifier + registry live" },
   { icon: FileCheck2, label: "Credential", note: "Verified claims only" },
 ];
@@ -57,18 +69,18 @@ export default function Home() {
           <div className="eyebrow"><span /> Zero-knowledge reputation credential · Stellar</div>
           <h1>Forge trust.<br /><em>Reveal nothing.</em></h1>
           <p>
-            Private financial reputation credentials on Stellar. Prove trust. Reveal nothing. ForgePass proves a predicate over supplied financial data without exposing income, balance, history, or score.
+            ForgePass lets a person prove they meet a financial trust policy, such as score &gt; 80, without revealing income, balance, transaction activity, or the score. ZK keeps the data private; Stellar makes the credential portable and verifiable.
           </p>
           <div className="hero-actions">
             <a className="primary-button" href="#proof">Start judge demo <ArrowRight size={17} /></a>
-            <a className="text-button" href="#testnet">View Testnet deployment</a>
+            <a className="text-button" href="#why-zk">Why ZK + Stellar</a>
           </div>
           <div className="network-line">
             <span className="network-dot" /> <Wallet size={13} /> Live on Stellar Testnet <span>{shortId(CONTRACTS.verifier)}</span>
           </div>
         </div>
 
-        <div className="hero-visual" aria-label="Private data transformed into a verified credential">
+        <div className="hero-visual" aria-label="Private data transformed into a privacy-preserving credential">
           <div className="orb orb-one" /><div className="orb orb-two" />
           <div className="data-card private-card">
             <small>PRIVATE SIGNALS</small>
@@ -95,7 +107,7 @@ export default function Home() {
       <section className="architecture shell" id="architecture">
         <div className="section-heading">
           <div><span className="section-number">00 / ARCHITECTURE</span><h2>Private data in.<br />Cryptographic proof out.</h2></div>
-          <p>The score is computed locally and mapped to public commitments. Live Stellar Testnet contracts are deployed for the verifier and registry; the browser proof transaction remains transparently scaffolded.</p>
+          <p>ForgePass separates private computation from public verification. The private data stays local; the public layer gets commitments, nullifiers, contract IDs, and credential state.</p>
         </div>
         <div className="pipeline">
           {pipeline.map(({ icon: Icon, label, note }, i) => (
@@ -111,10 +123,29 @@ export default function Home() {
       </section>
 
 
+
+      <section className="why-section shell" id="why-zk">
+        <div className="section-heading compact">
+          <div><span className="section-number">01 / WHY ZK + STELLAR</span><h2>The privacy and chain choices are the product.</h2></div>
+          <p>ForgePass is not just a score UI. ZK is what prevents data over-disclosure, and Stellar is the public network where the resulting credential can be anchored, checked, and reused.</p>
+        </div>
+        <div className="why-grid">
+          <article>
+            <span>Why zero-knowledge</span>
+            <h3>Prove the answer, not the bank statement.</h3>
+            <ul>{zkReasons.map((item) => <li key={item}>{item}</li>)}</ul>
+          </article>
+          <article>
+            <span>Why Stellar</span>
+            <h3>Portable trust needs public, low-cost rails.</h3>
+            <ul>{stellarReasons.map((item) => <li key={item}>{item}</li>)}</ul>
+          </article>
+        </div>
+      </section>
       <section className="live-testnet shell" id="testnet">
         <div className="section-heading">
-          <div><span className="section-number">01 / LIVE DEPLOYMENT</span><h2>Live on Stellar Testnet.</h2></div>
-          <p>ForgePass is an honest deployed vertical slice: real contracts and circuits, with browser proof generation, transaction submission, and full native proof verification still labeled as scaffolded.</p>
+          <div><span className="section-number">02 / LIVE DEPLOYMENT</span><h2>Stellar integration you can inspect.</h2></div>
+          <p>ForgePass is deployed on Stellar Testnet with verifier and registry contracts judges can open in Stellar Expert. Browser proof generation, transaction submission, and native UltraHonk verification are labeled until the VK-backed verifier is deployed.</p>
         </div>
         <div className="testnet-grid">
           {deploymentFacts.map((fact) => (
@@ -129,7 +160,7 @@ export default function Home() {
 
       <section className="truth-section shell" id="truth">
         <div className="section-heading compact">
-          <div><span className="section-number">02 / REAL VS SIMULATED</span><h2>Clear, judge-ready scope.</h2></div>
+          <div><span className="section-number">03 / REAL VS SIMULATED</span><h2>No guessing required.</h2></div>
           <p>No audited production launch claim is implied. The submission is a deployed Stellar Testnet vertical slice with transparent proof-generation scaffolding.</p>
         </div>
         <div className="truth-grid">
@@ -144,8 +175,8 @@ export default function Home() {
 
       <section className="demo-flow shell" id="demo-flow">
         <div className="section-heading compact">
-          <div><span className="section-number">03 / DEMO FLOW</span><h2>Six steps judges can test.</h2></div>
-          <p>Run it with Freighter on Testnet, or use labeled Demo Mode when no wallet extension is installed.</p>
+          <div><span className="section-number">04 / DEMO FLOW</span><h2>A demo with one job: make privacy obvious.</h2></div>
+          <p>Run it with Freighter on Testnet, or use labeled Demo Mode. The private numbers appear once, the policy result remains, and the Stellar contract links stay visible.</p>
         </div>
         <div className="demo-steps">
           {demoSteps.map((step, i) => <article key={step}><span>{i + 1}</span><strong>{step}</strong></article>)}
@@ -153,8 +184,8 @@ export default function Home() {
       </section>
       <section className="proof-section" id="proof">
         <div className="shell section-heading">
-          <div><span className="section-number">04 / PROOF STUDIO</span><h2>From private data to<br />portable trust.</h2></div>
-          <p>Experience the complete ForgePass proof ceremony. Your values appear once, become a zero-knowledge proof, then disappear — leaving only a verified credential.</p>
+          <div><span className="section-number">05 / PROOF STUDIO</span><h2>From hidden inputs to<br />shareable eligibility.</h2></div>
+          <p>Run the core story end to end: private inputs, local score, ZK predicate scaffold, live Stellar contract references, and a credential that contains claims instead of raw data.</p>
         </div>
         <ProofExperience />
       </section>
