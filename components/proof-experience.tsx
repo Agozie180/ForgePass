@@ -10,7 +10,7 @@ import QRCode from "qrcode";
 import { calculateTrustScore, DEMO_INPUTS, SCORE_MODEL, type TrustInputs } from "@/lib/domain/trust-score";
 import { DEFAULT_POLICY_ID, deriveClaims, getPolicy, POLICIES } from "@/lib/domain/policies";
 import { buildVerificationRecord, checkInputs, credentialId, forgeProof, shortHash, type ProofEnvelope, type VerificationRecord } from "@/lib/proof/forge";
-import { explorerContract, explorerTx, shortId } from "@/lib/stellar/config";
+import { explorerContract, explorerTx, HAS_LIVE_CONTRACTS, shortId } from "@/lib/stellar/config";
 import { DEMO_ADDRESS, useWallet } from "@/components/wallet-provider";
 
 type Stage = "data" | "score" | "proving" | "verified" | "credential";
@@ -288,10 +288,14 @@ function StellarVerificationPanel({ record, envelope }: { record: VerificationRe
     ["Proof commitment", shortHash(envelope.proofCommitment)],
     ["Nullifier", shortHash(envelope.nullifier)],
     ["Tx hash", record.onChain
-      ? <a key="tx" href={explorerTx(record.txHash)} target="_blank" rel="noreferrer">{shortHash(record.txHash)}</a>
+      ? <a key="tx" href={explorerTx(record.txHash)} target="_blank" rel="noreferrer">{shortHash(record.txHash)} ↗</a>
       : `${shortHash(record.txHash)} (simulated)`],
-    ["Verifier", <a key="v" href={explorerContract(record.verifierContract)} target="_blank" rel="noreferrer">{shortId(record.verifierContract)}</a>],
-    ["Registry", <a key="r" href={explorerContract(record.registryContract)} target="_blank" rel="noreferrer">{shortId(record.registryContract)}</a>],
+    ["Verifier", HAS_LIVE_CONTRACTS
+      ? <a key="v" href={explorerContract(record.verifierContract)} target="_blank" rel="noreferrer">{shortId(record.verifierContract)} ↗</a>
+      : `${shortId(record.verifierContract)} (placeholder)`],
+    ["Registry", HAS_LIVE_CONTRACTS
+      ? <a key="r" href={explorerContract(record.registryContract)} target="_blank" rel="noreferrer">{shortId(record.registryContract)} ↗</a>
+      : `${shortId(record.registryContract)} (placeholder)`],
     ["Disclosed", <b key="d" className="zero">0 private values</b>],
   ];
   return (
@@ -303,8 +307,19 @@ function StellarVerificationPanel({ record, envelope }: { record: VerificationRe
       <div className="verify-grid">
         {rows.map(([k, v]) => (<div key={k}><span>{k}</span><div>{v}</div></div>))}
       </div>
+      <div className="verify-explorer">
+        {record.onChain ? (
+          <a className="explorer-link" href={explorerTx(record.txHash)} target="_blank" rel="noreferrer">
+            <ShieldCheck size={14} /> View on Stellar Testnet ↗
+          </a>
+        ) : (
+          <span className="explorer-link disabled" aria-disabled="true">
+            Simulated transaction — no Stellar Explorer link available.
+          </span>
+        )}
+      </div>
       {!record.onChain && (
-        <p className="verify-note">Ledger and transaction hash are deterministic simulations. The verifier/registry contracts and Noir circuits are real; browser-side UltraHonk proving and Testnet submission are scaffolded. See docs/SECURITY.md.</p>
+        <p className="verify-note">Ledger and transaction hash are deterministic simulations. The Noir circuits and Soroban verifier source are real; browser-side UltraHonk proving and Testnet submission are scaffolded. See docs/SECURITY.md.</p>
       )}
     </div>
   );
@@ -362,9 +377,18 @@ function CredentialStage({ record, envelope, policyName, claims, holder, network
         <h3>Your reputation is now portable.</h3>
         <p>Share proof of qualification with any participating institution. They see verified claims — never the data behind them.</p>
         <div className="cred-actions">
-          <button onClick={copy}>{copied ? <><Check size={14} /> Copied</> : <><Copy size={14} /> Copy link</>}</button>
-          <button onClick={share}><Share2 size={14} /> Share</button>
+          <button onClick={share} title="Open the ForgePass credential link"><Share2 size={14} /> Share Credential</button>
+          <button onClick={copy}>{copied ? <><Check size={14} /> Copied</> : <><Copy size={14} /> Copy credential link</>}</button>
           <button onClick={() => setShowQr((v) => !v)}><Link2 size={14} /> QR code</button>
+          {record.onChain ? (
+            <a className="cred-action-link" href={explorerTx(record.txHash)} target="_blank" rel="noreferrer" title="Open the on-chain transaction on Stellar Expert">
+              <ShieldCheck size={14} /> View on Stellar Testnet ↗
+            </a>
+          ) : (
+            <span className="cred-action-link disabled" title="No on-chain transaction was submitted in this demo run">
+              <ShieldCheck size={14} /> Simulated — no Stellar link
+            </span>
+          )}
         </div>
         {showQr && qr && (
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="qr-box">
