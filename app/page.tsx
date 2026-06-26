@@ -13,18 +13,18 @@ const deploymentFacts = [
   { label: "Network", value: `${STELLAR_NETWORK.name} · RPC ${STELLAR_NETWORK.rpc.replace("https://", "")}` },
   { label: "Verifier contract", value: CONTRACTS.verifier, href: explorerContract(CONTRACTS.verifier) },
   { label: "Registry contract", value: CONTRACTS.registry, href: explorerContract(CONTRACTS.registry) },
-  { label: "Current role", value: "Verifier consumes authorized proof receipts and nullifiers; registry issues holder credentials. Browser proof submission remains scaffolded." },
+  { label: "Current role", value: "Verifier consumes authorized proof receipts and nullifiers; registry issues holder credentials. Freighter wallet mode submits native UltraHonk verify_proof calls." },
   { label: "Native UltraHonk", value: HAS_NATIVE_ULTRAHONK_MILESTONE ? "Verified milestone on Stellar Testnet" : "Native UltraHonk deployment pending", href: HAS_NATIVE_ULTRAHONK_VERIFIER ? explorerContract(CONTRACTS.nativeUltraHonkVerifier) : undefined },
   { label: "Native verify_proof tx", value: HAS_NATIVE_ULTRAHONK_TX_HASH ? shortId(CONTRACTS.nativeUltraHonkTxHash, 8, 8) : "Milestone transaction pending", href: HAS_NATIVE_ULTRAHONK_TX_HASH ? explorerTx(CONTRACTS.nativeUltraHonkTxHash) : undefined },
 ];
 
 const truthRows = [
-  { label: "Real", items: ["Frontend Proof Studio", "Reputation scoring model", "Noir circuits and tests", "Soroban verifier and registry contracts", "Native UltraHonk verifier milestone", "Verified Stellar Testnet deployments"] },
-  { label: "Simulated / scaffolded", items: ["Browser-side UltraHonk proof generation", "Frontend Testnet transaction submission from the demo UI"] },
-  { label: "Next", items: ["Real proof generation", "Signed bank, payroll, employer, or oracle attestations", "Independent audits"] },
+  { label: "Real", items: ["Frontend Proof Studio", "Reputation scoring model", "Noir circuits and tests", "Browser-side UltraHonk proof generation", "Freighter native verify_proof transaction submission", "Soroban verifier and registry contracts", "Native UltraHonk verifier milestone", "Verified Stellar Testnet deployments"] },
+  { label: "Limited", items: ["Demo Mode cannot sign fresh Testnet transactions", "Demo Mode displays the verified native UltraHonk milestone transaction"] },
+  { label: "Next", items: ["Signed bank, payroll, employer, or oracle attestations", "Independent audits", "Production hardening"] },
 ];
 
-const demoSteps = ["Connect wallet or use Demo Mode", "Enter private income, balance, and activity", "Compute the score locally", "Generate the ZK predicate scaffold", "Inspect live Stellar Testnet contracts", "Export or share the credential"];
+const demoSteps = ["Connect wallet or use Demo Mode", "Enter private income, balance, and activity", "Compute the score locally", "Generate a browser UltraHonk proof", "Submit verify_proof with Freighter or view the milestone tx in Demo Mode", "Export or share the credential"];
 
 const zkReasons = [
   "Financial trust checks usually expose too much raw data.",
@@ -42,7 +42,7 @@ const pipeline = [
   { icon: LockKeyhole, label: "Private data", note: "Income · balance · age · activity" },
   { icon: Cpu, label: "Off-chain compute", note: "Demo Reputation Model · local" },
   { icon: Binary, label: "Noir circuit", note: "Predicate: score > threshold" },
-  { icon: Fingerprint, label: "UltraHonk scaffold", note: "Proof path explicit" },
+  { icon: Fingerprint, label: "UltraHonk proof", note: "Browser proof bytes" },
   { icon: ShieldCheck, label: "Soroban contracts", note: "Verifier + registry live" },
   { icon: FileCheck2, label: "Credential", note: "Verified claims only" },
 ];
@@ -146,7 +146,7 @@ export default function Home() {
       <section className="live-testnet shell" id="testnet">
         <div className="section-heading">
           <div><span className="section-number">02 / LIVE DEPLOYMENT</span><h2>Stellar integration you can inspect.</h2></div>
-          <p>ForgePass is deployed on Stellar Testnet with verifier, registry, and VK-backed native UltraHonk verifier contracts judges can open in Stellar Expert. The demo shows the verified milestone transaction; fresh frontend proof submission is still labeled as future work.</p>
+          <p>ForgePass is deployed on Stellar Testnet with verifier, registry, and VK-backed native UltraHonk verifier contracts judges can open in Stellar Expert. Freighter wallet mode signs and submits a fresh native verify_proof transaction; Demo Mode shows the verified milestone transaction because it cannot sign.</p>
         </div>
         <div className="testnet-grid">
           {deploymentFacts.map((fact) => (
@@ -161,8 +161,8 @@ export default function Home() {
 
       <section className="truth-section shell" id="truth">
         <div className="section-heading compact">
-          <div><span className="section-number">03 / REAL VS SIMULATED</span><h2>No guessing required.</h2></div>
-          <p>No audited production launch claim is implied. The submission is a deployed Stellar Testnet vertical slice with transparent proof-generation scaffolding.</p>
+          <div><span className="section-number">03 / REAL VS LIMITED</span><h2>No guessing required.</h2></div>
+          <p>No audited production launch claim is implied. The submission is a deployed Stellar Testnet vertical slice with real browser UltraHonk proving, live Soroban contracts, and clearly labeled Demo Mode limits.</p>
         </div>
         <div className="truth-grid">
           {truthRows.map((row) => (
@@ -186,7 +186,7 @@ export default function Home() {
       <section className="proof-section" id="proof">
         <div className="shell section-heading">
           <div><span className="section-number">05 / PROOF STUDIO</span><h2>From hidden inputs to<br />shareable eligibility.</h2></div>
-          <p>Run the core story end to end: private inputs, local score, ZK predicate scaffold, live Stellar contract references, and a credential that contains claims instead of raw data.</p>
+          <p>Run the core story end to end: private inputs, local score, browser UltraHonk proof, live Stellar contract verification, and a credential that contains claims instead of raw data.</p>
         </div>
         <ProofExperience />
       </section>
@@ -199,3 +199,6 @@ export default function Home() {
     </main>
   );
 }
+
+
+

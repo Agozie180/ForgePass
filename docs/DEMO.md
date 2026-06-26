@@ -29,11 +29,11 @@ browser. Click **Compute private score**.
 
 Show the score of `91`, the component breakdown, and the **Qualifies** badge
 against the policy threshold. "The score is useful, but the lender does not need
-to see it." Click **Generate scaffolded proof**.
+to see it." Click **Generate UltraHonk proof**.
 
 **1:15 — Wow moment**
 
-Let the Noir / UltraHonk scaffold animation finish. The private values and score
+Let the Noir / UltraHonk proving step finish. The private values and score
 disappear. Land on **"Reputation verified. Privacy preserved."** and **0 private
 values**.
 
@@ -41,7 +41,7 @@ values**.
 
 Pan the **Stellar Verification Record**: network, ledger, proof commitment,
 nullifier, verifier and registry contracts. Note that simulated values are
-labeled "(simulated)". Native UltraHonk verifier deployed and verified on Stellar Testnet; the demo displays the milestone transaction link, while fresh browser-to-Testnet submission is still future work. Click **Issue ForgePass Credential**.
+labeled "(simulated)". Native UltraHonk verifier deployed and verified on Stellar Testnet; Freighter wallet mode submits a fresh `verify_proof` transaction, while Demo Mode displays the milestone transaction link because it cannot sign. Click **Issue ForgePass Credential**.
 
 **1:45 — Credential**
 
@@ -62,7 +62,7 @@ revealed.*
 | 0-7s | Landing headline, slow push-in | "Trust online still requires exposure." |
 | 7-16s | Editable private signals | "ForgePass turns private financial signals into proof." |
 | 16-24s | Score resolves to 91 | "A private reputation score is computed locally." |
-| 24-35s | Noir / UltraHonk scaffold animation | "Zero knowledge proves only the required predicate." |
+| 24-35s | Noir / UltraHonk proving | "Zero knowledge proves only the required predicate." |
 | 35-44s | Values blur and disappear | "The score and every input vanish." |
 | 44-52s | Stellar verification record | "Stellar anchors a replay-safe verification." |
 | 52-60s | Credential assembles | "Forge trust. Reveal nothing." |
@@ -71,3 +71,4 @@ Use restrained sound design: muted input clicks, a rising proof tone, then one
 clean confirmation note at verification. Never show invented explorer footage as
 a real transaction; use a deployed Testnet transaction or label the preview as a
 simulation (the UI already does this).
+

@@ -12,6 +12,8 @@
     "verify:live": "node scripts/verify-live-testnet.mjs"
   },
   "dependencies": {
+    "@aztec/bb.js": "^0.87.9",
+    "@noir-lang/noir_js": "^1.0.0-beta.22",
     "@stellar/freighter-api": "^4.1.0",
     "@stellar/stellar-sdk": "^13.3.0",
     "framer-motion": "^12.23.24",

@@ -62,7 +62,7 @@ keep distinct eligibility checks unlinkable to each other.
 
 ## Soroban assumptions
 
-- The verifier role faithfully verifies receipt-flow submissions. Native UltraHonk verification is live on Stellar Testnet for the full `trust_score_proof` circuit via a VK-backed `rs-soroban-ultrahonk` verifier contract. That verifier fixes the verification key at deploy time, uses proofs generated with `--oracle_hash keccak`, and verifies BN254 pairings through Soroban Protocol 25 host functions (`g1_add`/`g1_mul`/`pairing_check`). The current frontend demo displays the milestone verification link; fresh browser-to-Testnet proof transaction submission is still future work.
+- The verifier role faithfully verifies receipt-flow submissions. Native UltraHonk verification is live on Stellar Testnet for the full `trust_score_proof` circuit via a VK-backed `rs-soroban-ultrahonk` verifier contract. That verifier fixes the verification key at deploy time, uses proofs generated with `--oracle_hash keccak`, and verifies BN254 pairings through Soroban Protocol 25 host functions (`g1_add`/`g1_mul`/`pairing_check`). The frontend generates browser UltraHonk proofs and Freighter wallet mode submits fresh native `verify_proof` transactions. Demo Mode cannot sign and therefore displays the milestone verification link.
 - Checks-effects-interactions ordering holds for nullifier consumption.
 - Admin operations (pause, verifier rotation, revocation) are protected by
   `require_auth` and, in production, multisig.
@@ -71,14 +71,14 @@ keep distinct eligibility checks unlinkable to each other.
 
 The deployed demo is a vertical slice. Native UltraHonk verification is live on Stellar Testnet for the full `trust_score_proof` circuit: the verifier contract is deployed, and `verify_proof` was successfully invoked on-chain. Specifically:
 
-- Browser-side UltraHonk proof generation and fresh frontend Testnet submission are still future work. The UI displays the verified milestone transaction link rather than claiming each demo credential submits a new transaction.
-- Contract IDs are live Stellar Testnet deployments when the public env vars are set; ledger sequence and browser-session transaction hash remain deterministic simulations until fresh submission is wired.
+- Browser UltraHonk proof generation is wired in the frontend, and Freighter wallet mode submits a fresh native `verify_proof` transaction to Testnet.
+- Demo Mode cannot sign transactions, so it displays the verified milestone transaction link and labeled deterministic ledger/transaction values.
 - Inputs are self-asserted — there is no source attestation in the demo.
 - The reputation model is illustrative ("Demo Reputation Model"), not a credit score.
 
 ## Future production security
 
-- Replace browser-side simulation with real Noir + UltraHonk proof generation and fresh transaction submission to the deployed native verifier; keep the verifier + registry refreshed on Testnet, then deploy audited versions to Mainnet.
+- Add source attestations, keep verifier + registry deployments refreshed, then deploy audited versions to Mainnet.
 - Add signed source attestations and an independently operated verifier quorum.
 - External circuit and contract audits; hardware-backed key ceremonies.
 - See the threat table below for the full target control set.
@@ -134,4 +134,6 @@ The deployed demo is a vertical slice. Native UltraHonk verification is live on 
 ForgePass is not a credit bureau, identity provider or automatic lending decision.
 It proves policy predicates over attested inputs. Partners remain responsible for
 fair-lending, consumer protection, KYC/AML and adverse-action obligations.
+
+
 

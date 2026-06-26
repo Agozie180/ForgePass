@@ -10,6 +10,7 @@ import {
   isConnected,
   requestAccess,
   setAllowed,
+  signTransaction,
 } from "@stellar/freighter-api";
 
 export type WalletConnection = {
@@ -39,15 +40,15 @@ export async function isAuthorized(): Promise<boolean> {
 /** Prompt the user to grant access and return their connection details. */
 export async function connectFreighter(): Promise<WalletConnection> {
   const access = await requestAccess();
-  if (access.error) throw new Error(access.error);
+  if (access.error) throw new Error(access.error.message ?? "Freighter access rejected");
   if (!access.address) {
     await setAllowed();
     const addr = await getAddress();
-    if (addr.error || !addr.address) throw new Error(addr.error || "No address returned");
+    if (addr.error || !addr.address) throw new Error(addr.error?.message || "No address returned");
     access.address = addr.address;
   }
   const net = await getNetwork();
-  if (net.error) throw new Error(net.error);
+  if (net.error) throw new Error(net.error.message ?? "Could not read Freighter network");
   return {
     address: access.address,
     network: net.network ?? "TESTNET",
@@ -66,4 +67,14 @@ export async function restoreFreighter(): Promise<WalletConnection | null> {
     network: net.network ?? "TESTNET",
     networkPassphrase: net.networkPassphrase ?? "",
   };
+}
+
+export async function signFreighterTransaction(
+  transactionXdr: string,
+  networkPassphrase: string,
+  accountToSign: string,
+): Promise<string> {
+  const res = await signTransaction(transactionXdr, { networkPassphrase, address: accountToSign });
+  if (res.error || !res.signedTxXdr) throw new Error(res.error?.message || "Freighter did not return a signed transaction.");
+  return res.signedTxXdr;
 }

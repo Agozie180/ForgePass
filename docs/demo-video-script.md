@@ -44,16 +44,16 @@ light theme. Recommended companion stills live in `docs/screenshots/`.
 
 ## 1:25 — 1:45 · The proof (WOW moment)
 
-> "Now ForgePass previews the Noir circuit and UltraHonk proof scaffold… and watch:
+> "Now ForgePass previews the Noir circuit and UltraHonk proof… and watch:
 > every private value disappears."
 
-- Click **Generate ZK predicate scaffold**; let the Noir / UltraHonk scaffold animation complete.
+- Click **Generate UltraHonk proof**; let the Noir / UltraHonk proving complete.
 - Land on **"Reputation verified. Privacy preserved."**
 - Screenshot: `proof-generation.png`.
 
 ## 1:45 — 2:05 · Stellar verification
 
-> "ForgePass is live on Stellar Testnet with deployed verifier and registry contracts. The demo shows the replay-safe verification record — network, commitments, nullifier, and contract links — while scaffolded proof-generation and transaction values are labeled honestly."
+> "ForgePass is live on Stellar Testnet with deployed verifier and registry contracts. The demo shows the replay-safe verification record — network, commitments, nullifier, contract links, and native UltraHonk status. Freighter mode submits a fresh Testnet transaction; Demo Mode displays the verified milestone link because it cannot sign."
 
 - Pan over the **Stellar Verification Record** panel and click the verifier/registry explorer links.
 - Screenshot: `stellar-verification.png`.
@@ -81,5 +81,6 @@ light theme. Recommended companion stills live in `docs/screenshots/`.
 - [ ] Browser zoom 100%, window ≥ 1440px wide (desktop layout).
 - [ ] Freighter installed + set to **Testnet** for the wallet segment.
 - [ ] Pre-set sliders so the score lands on a clean **91** for the hero take.
-- [ ] Show the **Live on Stellar Testnet** contract IDs, then show at least one **"simulated/scaffolded"** label to reinforce honesty.
+- [ ] Show the **Live on Stellar Testnet** contract IDs, then show at least one **Demo Mode cannot sign** label to reinforce honesty.
 - [ ] Re-run once in **Demo Mode** to prove the flow works without an extension.
+
