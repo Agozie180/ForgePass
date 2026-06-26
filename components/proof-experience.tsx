@@ -9,7 +9,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import QRCode from "qrcode";
 import { calculateTrustScore, DEMO_INPUTS, SCORE_MODEL, type TrustInputs } from "@/lib/domain/trust-score";
 import { DEFAULT_POLICY_ID, deriveClaims, getPolicy, POLICIES } from "@/lib/domain/policies";
-import { buildVerificationRecord, checkInputs, credentialId, shortHash, type ProofEnvelope, type VerificationRecord } from "@/lib/proof/forge";
+import { buildVerificationRecord, checkInputs, credentialId, forgeProof, shortHash, type ProofEnvelope, type VerificationRecord } from "@/lib/proof/forge";
 import { INITIAL_PROOF_RUN_STATE, isBrowserProofUnsupportedError, reduceProofRunState } from "@/lib/proof/proof-state";
 import { generateBrowserUltraHonkProof } from "@/lib/proof/browser-ultrahonk";
 import { CONTRACTS, explorerContract, explorerTx, HAS_LIVE_CONTRACTS, HAS_NATIVE_ULTRAHONK_MILESTONE, HAS_NATIVE_ULTRAHONK_TX_HASH, HAS_NATIVE_ULTRAHONK_VERIFIER, shortId } from "@/lib/stellar/config";
@@ -146,6 +146,21 @@ export function ProofExperience() {
     }
   }, [score, proofRun.status, policy, inputs, holder, wallet.isDemo]);
 
+
+  const continueWithMilestoneMode = useCallback(async () => {
+    if (!score || !HAS_NATIVE_ULTRAHONK_MILESTONE) return;
+    const env = await forgeProof(policy, score, holder);
+    const rec = await buildVerificationRecord(env, holder, new Date().toISOString());
+    setEnvelope(env);
+    setRecord({
+      ...rec,
+      status: "Native UltraHonk milestone verified",
+      txHash: CONTRACTS.nativeUltraHonkTxHash,
+      onChain: false,
+      milestoneMode: true,
+    });
+    setStage("verified");
+  }, [score, policy, holder]);
   const reset = () => {
     setStage("data");
     setEnvelope(null);
@@ -285,6 +300,7 @@ export function ProofExperience() {
                         <NativeUltraHonkStatus />
                         <div className="proof-error-actions">
                           <button className="ghost" onClick={() => setStage("score")}>Back to score</button>
+                          {HAS_NATIVE_ULTRAHONK_MILESTONE && <button onClick={continueWithMilestoneMode}>Continue with Verified Milestone Mode <ArrowRight size={16} /></button>}
                           <button onClick={runProof}>Retry browser proof <ArrowRight size={16} /></button>
                         </div>
                       </div>
@@ -309,7 +325,7 @@ export function ProofExperience() {
               {stage === "verified" && record && envelope && (
                 <motion.div key="verified" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="stage-content verified-stage">
                   <motion.div className="success-seal" initial={{ scale: 0.6, rotate: -8 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring" }}><ShieldCheck size={38} /></motion.div>
-                  <span className="mono-label">{record.onChain ? "NATIVE ULTRAHONK VERIFIED ON STELLAR TESTNET" : envelope.proofKind === "browser-ultrahonk" ? "BROWSER ULTRAHONK PROOF · DEMO MODE TX" : HAS_LIVE_CONTRACTS ? "LIVE TESTNET CONTRACTS" : "LOCAL DEMO"}</span>
+                  <span className="mono-label">{record.onChain ? "NATIVE ULTRAHONK VERIFIED ON STELLAR TESTNET" : record.milestoneMode ? "NATIVE ULTRAHONK MILESTONE VERIFIED ON STELLAR TESTNET" : envelope.proofKind === "browser-ultrahonk" ? "BROWSER ULTRAHONK PROOF · DEMO MODE TX" : HAS_LIVE_CONTRACTS ? "LIVE TESTNET CONTRACTS" : "LOCAL DEMO"}</span>
                   <h3>Credential ready. Privacy preserved.</h3>
                   <p>The only claim carried forward is: score above {policy.scoreThreshold}.<br />The raw inputs and exact score are gone; the Stellar contract links remain inspectable.</p>
                   <StellarVerificationPanel record={record} envelope={envelope} />
@@ -396,12 +412,12 @@ function StellarVerificationPanel({ record, envelope }: { record: VerificationRe
     ["Network", record.network],
     ["Wallet", `${record.holder.slice(0, 6)}…${record.holder.slice(-4)}`],
     ["Timestamp", new Date(record.timestamp).toUTCString()],
-    ["Ledger", `#${fmt(record.ledger)}${record.onChain ? "" : " (simulated)"}`],
+    ["Ledger", `#${fmt(record.ledger)}${record.onChain ? "" : record.milestoneMode ? " (milestone)" : " (simulated)"}`],
     ["Proof system", envelope.proofSystem],
     ["Proof commitment", shortHash(envelope.proofCommitment)],
     ["Proof bytes", envelope.proofSizeBytes ? `${fmt(envelope.proofSizeBytes)} bytes` : "metadata only"],
     ["Nullifier", shortHash(envelope.nullifier)],
-    ["Tx hash", record.onChain
+    ["Tx hash", record.onChain || record.milestoneMode
       ? <a key="tx" href={explorerTx(record.txHash)} target="_blank" rel="noreferrer">{shortHash(record.txHash)} ↗</a>
       : `${shortHash(record.txHash)} (simulated)`],
     ["Verifier", HAS_LIVE_CONTRACTS
@@ -411,20 +427,20 @@ function StellarVerificationPanel({ record, envelope }: { record: VerificationRe
       ? <a key="r" href={explorerContract(record.registryContract)} target="_blank" rel="noreferrer">{shortId(record.registryContract)} ↗</a>
       : `${shortId(record.registryContract)} (placeholder)`],
     ["Native UltraHonk", <NativeUltraHonkStatus key="native" compact />],
-    ["Fresh browser proof", envelope.proofKind === "browser-ultrahonk" ? <b key="fresh" className="ok"><Check size={12} /> success</b> : "not generated"],
+    ["Fresh browser proof", envelope.proofKind === "browser-ultrahonk" ? <b key="fresh" className="ok"><Check size={12} /> success</b> : record.milestoneMode ? "not completed; using verified milestone" : "not generated"],
     ["Disclosed", <b key="d" className="zero">0 private values</b>],
   ];
   return (
     <div className="verify-panel">
       <div className="verify-panel-head">
         <ShieldCheck size={15} /> Stellar Verification Record
-        <span className={record.onChain ? "tag live" : "tag demo"}>{record.onChain ? "Fresh on-chain tx" : envelope.proofKind === "browser-ultrahonk" ? "Proof real · demo tx" : "Demo"}</span>
+        <span className={record.onChain || record.milestoneMode ? "tag live" : "tag demo"}>{record.onChain ? "Fresh on-chain tx" : record.milestoneMode ? "Verified milestone" : envelope.proofKind === "browser-ultrahonk" ? "Proof real · demo tx" : "Demo"}</span>
       </div>
       <div className="verify-grid">
         {rows.map(([k, v]) => (<div key={k}><span>{k}</span><div>{v}</div></div>))}
       </div>
       <div className="verify-explorer">
-        {record.onChain ? (
+        {record.onChain || record.milestoneMode ? (
           <a className="explorer-link" href={explorerTx(record.txHash)} target="_blank" rel="noreferrer">
             <ShieldCheck size={14} /> View in Stellar Expert Testnet Explorer ↗
           </a>
@@ -437,7 +453,7 @@ function StellarVerificationPanel({ record, envelope }: { record: VerificationRe
         )}
       </div>
       {!record.onChain && (
-        <p className="verify-note">Fresh browser proof generation status: success. Demo Mode cannot sign transactions, so it displays the verified milestone transaction; Freighter wallet mode submits a fresh native verify_proof transaction.</p>
+        <p className="verify-note">{record.milestoneMode ? "Fresh browser proof generation did not complete. This view uses the real native UltraHonk milestone transaction; it is not a fresh proof for these inputs." : "Fresh browser proof generation status: success. Demo Mode cannot sign transactions, so it displays the verified milestone transaction; Freighter wallet mode submits a fresh native verify_proof transaction."}</p>
       )}
     </div>
   );
@@ -493,7 +509,7 @@ function CredentialStage({ record, envelope, policyName, claims, holder, network
       <div className="passport-copy">
         <span>STEP 5 OF 5</span>
         <h3>Your reputation is now portable.</h3>
-        <p>Share eligibility claims with any participating institution. Browser UltraHonk proof generation is live; Freighter wallet sessions submit a fresh native verify_proof transaction, while Demo Mode displays the verified milestone transaction.</p>
+        <p>{record.onChain ? "Share eligibility claims with any participating institution. This credential came from a fresh native verify_proof transaction on Stellar Testnet." : record.milestoneMode ? "Share eligibility claims with any participating institution. Fresh browser proving did not complete here, so this demo continues with the real verified native UltraHonk milestone transaction." : "Share eligibility claims with any participating institution. This demo generated a fresh browser UltraHonk proof; Demo Mode displays the verified milestone transaction while Freighter sessions submit a fresh native verify_proof transaction."}</p>
         <div className="cred-actions">
           <button onClick={share} title="Open the ForgePass credential link"><Share2 size={14} /> Share Credential</button>
           <button onClick={copy}>{copied ? <><Check size={14} /> Copied</> : <><Copy size={14} /> Copy credential link</>}</button>
@@ -547,7 +563,7 @@ function CredentialStage({ record, envelope, policyName, claims, holder, network
         </div>
         <div className="passport-proof"><span>Proof</span><code>{shortHash(envelope.proofCommitment)}</code></div>
         <div className="passport-foot">
-          <span><ShieldCheck size={14} /> {record.onChain ? "On-chain verified" : HAS_NATIVE_ULTRAHONK_MILESTONE ? "Native UltraHonk verifier deployed on Stellar Testnet" : HAS_LIVE_CONTRACTS ? "Contracts live" : "Demo credential"}</span>
+          <span><ShieldCheck size={14} /> {record.onChain ? "On-chain verified" : record.milestoneMode ? "Verified milestone mode" : HAS_NATIVE_ULTRAHONK_MILESTONE ? "Native UltraHonk verifier deployed on Stellar Testnet" : HAS_LIVE_CONTRACTS ? "Contracts live" : "Demo credential"}</span>
           <span>{id}</span>
         </div>
       </motion.div>

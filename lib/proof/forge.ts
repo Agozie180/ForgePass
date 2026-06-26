@@ -69,7 +69,11 @@ export type ProofEnvelope = {
 };
 
 export type VerificationRecord = {
-  status: "Scaffolded" | "Browser UltraHonk proof generated" | "Native UltraHonk verified on-chain";
+  status:
+    | "Scaffolded"
+    | "Browser UltraHonk proof generated"
+    | "Native UltraHonk verified on-chain"
+    | "Native UltraHonk milestone verified";
   network: string;
   networkPassphrase: string;
   holder: string;
@@ -84,6 +88,8 @@ export type VerificationRecord = {
   explorer: string;
   /** True only after a real proof transaction is submitted. Contract links can be live while this remains false. */
   onChain: boolean;
+  /** True when the UI continues with the real deployed milestone proof instead of a fresh browser proof. */
+  milestoneMode?: boolean;
 };
 
 /**
