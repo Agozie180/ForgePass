@@ -13,8 +13,8 @@ The verifier gets one useful answer: **qualified / not qualified**. The holder k
 - **What it does:** ForgePass turns private financial signals into a portable reputation credential.
 - **Why ZK is essential:** without zero-knowledge proofs, the user must expose raw financial data to earn trust. With ZK, the user proves only the policy result.
 - **Why Stellar:** Stellar gives the credential wallet binding, low-cost public verification rails, fast settlement, and Soroban contracts for replay protection and registry state.
-- **What is live:** ForgePass verifier and registry contracts are deployed on Stellar Testnet and can be inspected in Stellar Expert.
-- **What is scaffolded:** browser UltraHonk proof generation, frontend transaction submission, and the native VK-backed UltraHonk verifier contract are not claimed as complete until the required Barretenberg artifacts and contract ID are configured.
+- **What is live:** ForgePass verifier, registry, and VK-backed native UltraHonk verifier contracts are deployed on Stellar Testnet and can be inspected in Stellar Expert.
+- **What is scaffolded:** browser UltraHonk proof generation and frontend transaction submission remain scaffolded in the demo UI. The native verifier milestone is real: Barretenberg artifacts were generated for `trust_score_proof`, the VK-backed verifier was deployed, and `verify_proof` was invoked on Testnet.
 
 ## Judge Verification Checklist
 
@@ -24,7 +24,7 @@ The verifier gets one useful answer: **qualified / not qualified**. The holder k
 4. Confirm the score is computed locally and only the threshold claim continues.
 5. Confirm the live Stellar Testnet contract IDs and Stellar Expert links are visible.
 6. Confirm simulated/scaffolded proof-generation and transaction values are labeled honestly.
-7. Run `npm run verify:live` to confirm the deployed Soroban contracts exist on Testnet.
+7. Run `npm run verify:live` to confirm all three deployed Soroban contracts exist on Testnet.
 
 ## Why Zero-Knowledge Is The Point
 
@@ -55,8 +55,11 @@ ForgePass needs a public network that can make credentials portable without maki
 - RPC: `https://soroban-testnet.stellar.org`
 - Verifier contract: `CCNNXYINWM3QNC3HNKOU66XCJP5GJMZYMSMXYBZALT4U24AXN6RAPXNF`
 - Registry contract: `CABRLKSOTTR3YSMXQUPLTBR3QBDIOC5SLPIIX7VI2JPLLTHWL4BQBDOT`
+- Native UltraHonk verifier contract: `CA4WPPLXN4HSQBLB23ZVCLG5PZ6G5SD3R2BWMSMDY6OVRLFONDAMSMK2`
 - Verifier explorer: https://stellar.expert/explorer/testnet/contract/CCNNXYINWM3QNC3HNKOU66XCJP5GJMZYMSMXYBZALT4U24AXN6RAPXNF
 - Registry explorer: https://stellar.expert/explorer/testnet/contract/CABRLKSOTTR3YSMXQUPLTBR3QBDIOC5SLPIIX7VI2JPLLTHWL4BQBDOT
+- Native UltraHonk explorer: https://stellar.expert/explorer/testnet/contract/CA4WPPLXN4HSQBLB23ZVCLG5PZ6G5SD3R2BWMSMDY6OVRLFONDAMSMK2
+- Native proof verification tx: https://stellar.expert/explorer/testnet/tx/733a10034fbd11cb8a588d7fcc98af30a9d25f7d844c4a2beca65fd15f5a61f5
 
 The deployed contracts currently provide the Soroban surface for replay-safe verifier receipts and holder credential registry state:
 
@@ -71,20 +74,23 @@ npm run verify:live
 
 ## Native UltraHonk Status
 
-ForgePass is designed for native on-chain UltraHonk verification, but the current deployed Testnet verifier is the replay-safe receipt contract, not yet the VK-backed native verifier. Native deployment requires:
+ForgePass now has a deployed VK-backed native UltraHonk verifier milestone for the full `circuits/trust_score_proof` circuit.
 
-- UltraHonk verification key for `circuits/trust_score_proof`.
-- UltraHonk proof bytes for the canonical witness.
-- Public inputs encoded for the Soroban verifier contract.
-- A Soroban verifier Wasm built from the `rs-soroban-ultrahonk` interface with the verification key fixed at deploy time.
+- Circuit: `circuits/trust_score_proof`
+- Proving system: Noir `1.0.0-beta.9` + Barretenberg `0.87.0` UltraHonk with `--oracle_hash keccak`
+- Artifacts: `artifacts/ultrahonk/trust_score_proof/`
+- Verifier Wasm: `artifacts/soroban/native-ultrahonk/rs_soroban_ultrahonk.wasm`
+- Native verifier contract: `CA4WPPLXN4HSQBLB23ZVCLG5PZ6G5SD3R2BWMSMDY6OVRLFONDAMSMK2`
+- Explorer: https://stellar.expert/explorer/testnet/contract/CA4WPPLXN4HSQBLB23ZVCLG5PZ6G5SD3R2BWMSMDY6OVRLFONDAMSMK2
+- Successful `verify_proof` transaction: https://stellar.expert/explorer/testnet/tx/733a10034fbd11cb8a588d7fcc98af30a9d25f7d844c4a2beca65fd15f5a61f5
 
-After deploying that contract, set:
+Environment variable:
 
 ```bash
-NEXT_PUBLIC_FORGEPASS_NATIVE_ULTRAHONK_CONTRACT_ID=<native verifier contract id>
+NEXT_PUBLIC_FORGEPASS_NATIVE_ULTRAHONK_CONTRACT_ID=CA4WPPLXN4HSQBLB23ZVCLG5PZ6G5SD3R2BWMSMDY6OVRLFONDAMSMK2
 ```
 
-Then `npm run verify:live` will verify all three Testnet contracts and the UI will show the native verifier explorer link.
+`npm run verify:live` verifies the ForgePass verifier, registry, and native UltraHonk verifier contract instances on Stellar Testnet.
 
 ## Demo Flow
 
@@ -99,11 +105,12 @@ A longer recording script lives at [`docs/demo-video-script.md`](docs/demo-video
 
 ## What Is Real vs Scaffolded
 
-**Real:** frontend Proof Studio, deterministic reputation scoring model, Noir circuits/tests, Soroban verifier/registry contracts, committed Soroban Wasm artifacts, and verified Stellar Testnet deployments.
+**Real:** frontend Proof Studio, deterministic reputation scoring model, Noir circuits/tests, Barretenberg UltraHonk artifacts for `trust_score_proof`, Soroban verifier/registry contracts, deployed VK-backed native UltraHonk verifier, committed Soroban Wasm artifacts, and verified Stellar Testnet deployments.
 
-**Scaffolded:** browser UltraHonk proof generation, frontend transaction submission, and native VK-backed UltraHonk verification until the Barretenberg artifacts and native verifier contract are deployed.
+**Scaffolded:** browser UltraHonk proof generation and frontend transaction submission in the demo UI.
 
 **Production requirement:** ForgePass proves a predicate over supplied data. In production, data truth comes from signed attestations by banks, payroll providers, employers, or trusted issuers.
+
 ## The problem
 
 Every financial application asks people to *surrender data to earn trust*: upload
@@ -124,7 +131,7 @@ Private data ─▶ Off-chain reputation computation ─▶ Noir circuit
 1. The holder enters private signals (income, balance, age, activity, consistency).
 2. ForgePass computes a **reputation score (0–100)** locally, in the browser.
 3. The score is mapped to the public commitments a `score > threshold` proof would expose.
-4. The deployed Soroban verifier/registry contract links are shown; browser proof generation and transaction submission remain scaffolded.
+4. Barretenberg UltraHonk artifacts now exist for the full `trust_score_proof`; the browser demo still labels proof generation and transaction submission as scaffolded.
 5. The private values are discarded and a **ForgePass Reputation Credential** preview is issued.
 
 The memorable moment: the private inputs and the score **disappear**, and a
@@ -139,12 +146,13 @@ flowchart LR
   subgraph Device["Holder device (private)"]
     D["Private signals"] --> S["Demo Reputation Model<br/>(off-chain compute)"]
     S --> N["Noir circuit<br/>score &gt; threshold"]
-    N --> P["UltraHonk proof scaffold"]
+    N --> P["UltraHonk proof artifacts"]
   end
   subgraph Stellar["Stellar Testnet"]
     V["ForgePassVerifier<br/>(Soroban)"] --> R["ForgePassRegistry<br/>(Soroban)"]
   end
-  P -. scaffolded tx path .-> V
+  P --> U["Native UltraHonk verifier<br/>(Soroban milestone)"]
+  U --> V
   R --> C["ForgePass Reputation Credential<br/>(qualification claims only)"]
 ```
 
@@ -154,8 +162,8 @@ flowchart LR
 | Wallet | `@stellar/freighter-api` + Demo Mode | Real Testnet address or simulated session |
 | Off-chain compute | `lib/domain` | Deterministic reputation model + canonical vectors |
 | Circuits | Noir (`v1.0.0-beta.22`) | Five threshold predicates incl. flagship score circuit |
-| Proof system target | UltraHonk | Succinct ZK proof path; browser generation scaffolded until Barretenberg artifacts are wired |
-| Verification surface | Soroban (Rust, `wasm32v1-none`) | Live replay-safe verifier + credential registry contracts; native UltraHonk tx path next |
+| Proof system target | UltraHonk | Succinct ZK proof path; Barretenberg artifacts generated for `trust_score_proof`; browser generation remains scaffolded |
+| Verification surface | Soroban (Rust, `wasm32v1-none`) | Live replay-safe verifier + credential registry contracts + deployed native UltraHonk verifier milestone |
 | Commitments | Web Crypto SHA-256 | Public-input commitment, holder binding, nullifier |
 
 ---
@@ -222,11 +230,7 @@ The intended on-chain interface mirrors the reference verifier contract:
   100M budget — whereas the native path lands near ~112M and shrinks the contract
   from ~130 KB to ~15 KB.
 
-In ForgePass the on-chain UltraHonk verifier is **scaffolded against this
-interface** — `ForgePassVerifier` currently consumes a verifier-attested receipt
-and enforces replay/expiry, with the native `verify_proof` step documented as the
-next integration milestone. ForgePass never claims a proof was verified when it
-was not — every simulated value is labeled in the UI.
+ForgePass now includes a deployed native UltraHonk verifier milestone using this interface. The verifier was deployed with the `trust_score_proof` VK and successfully invoked on Stellar Testnet with the generated proof and public inputs. Browser-side proof generation and the current frontend submission flow remain labeled as scaffolded in the UI.
 
 ## Soroban contracts
 
@@ -280,7 +284,8 @@ Honesty is a feature. The UI labels every simulated value.
 - Freighter wallet connect + Demo Mode, with persisted sessions.
 - SHA-256 public-input commitment, holder binding, and replay nullifier (Web Crypto).
 - Five Noir circuits with passing tests + committed ACIR artifacts.
-- Two Soroban contracts with replay protection + committed Wasm artifacts, deployed on Stellar Testnet.
+- Two ForgePass Soroban contracts with replay protection + committed Wasm artifacts, deployed on Stellar Testnet.
+- A VK-backed native UltraHonk verifier contract deployed on Stellar Testnet for `trust_score_proof`.
 - Privacy-minimized Prisma schema; 25 unit tests across model, policy, and proof,
   including a 1,280-vector circuit-parity grid and threshold-boundary checks.
 
@@ -291,7 +296,7 @@ Honesty is a feature. The UI labels every simulated value.
 
 **Scaffolded / future work**
 - Browser-to-Testnet transaction submission for the current proof ceremony.
-- The native on-chain UltraHonk verifier path (rs-soroban-ultrahonk integration).
+- Browser-side generation of the UltraHonk proof from live user inputs.
 - Signed source attestations and an independently operated verifier quorum.
 
 See `docs/SECURITY.md` for the full trust model.
@@ -322,20 +327,21 @@ Optional: connect [Freighter](https://www.freighter.app/) on Testnet, or click
 
 ### Native UltraHonk verifier deployment
 
-ForgePass is designed for native on-chain UltraHonk verification, but the current deployed verifier/registry contracts are the replay-safe receipt surface. To deploy the native verifier contract honestly, generate and commit/deploy these Barretenberg artifacts for `circuits/trust_score_proof`:
+Status: deployed on Stellar Testnet as a native verifier milestone for the full `circuits/trust_score_proof` circuit, using Noir `1.0.0-beta.9` and Barretenberg `0.87.0` to match the rs-soroban-ultrahonk reference flow.
 
-- UltraHonk verification key for the trust-score circuit.
-- UltraHonk proof bytes for the canonical demo witness.
-- Public inputs encoded for the Soroban verifier contract.
-- A Soroban verifier Wasm built from the `rs-soroban-ultrahonk` interface with the verification key fixed at deploy time.
+- Contract ID: `CA4WPPLXN4HSQBLB23ZVCLG5PZ6G5SD3R2BWMSMDY6OVRLFONDAMSMK2`
+- Explorer: https://stellar.expert/explorer/testnet/contract/CA4WPPLXN4HSQBLB23ZVCLG5PZ6G5SD3R2BWMSMDY6OVRLFONDAMSMK2
+- Successful `verify_proof` transaction: https://stellar.expert/explorer/testnet/tx/733a10034fbd11cb8a588d7fcc98af30a9d25f7d844c4a2beca65fd15f5a61f5
+- Artifacts: `artifacts/ultrahonk/trust_score_proof/`
+- Wasm: `artifacts/soroban/native-ultrahonk/rs_soroban_ultrahonk.wasm`
 
-After deployment, set:
+Keep this public env var set in Vercel/Railway:
 
 ```bash
-NEXT_PUBLIC_FORGEPASS_NATIVE_ULTRAHONK_CONTRACT_ID=<native verifier contract id>
+NEXT_PUBLIC_FORGEPASS_NATIVE_ULTRAHONK_CONTRACT_ID=CA4WPPLXN4HSQBLB23ZVCLG5PZ6G5SD3R2BWMSMDY6OVRLFONDAMSMK2
 ```
 
-Then `npm run verify:live` will verify all three Testnet contracts and the UI will show the native verifier explorer link. Successful submitted transactions use the CTA **View in Stellar Expert Testnet Explorer**.
+`npm run verify:live` verifies all three Testnet contracts. Successful submitted transactions use the CTA **View in Stellar Expert Testnet Explorer**.
 ### Vercel / Railway redeploy
 
 ForgePass is safe to redeploy without local Soroban tooling. Vercel only needs the public Next.js variables below; it does not need Docker, Cargo, Stellar CLI, or private keys for the current frontend demo.
@@ -345,6 +351,7 @@ NEXT_PUBLIC_STELLAR_NETWORK=Testnet
 NEXT_PUBLIC_STELLAR_RPC_URL=https://soroban-testnet.stellar.org
 NEXT_PUBLIC_FORGEPASS_VERIFIER_ID=CCNNXYINWM3QNC3HNKOU66XCJP5GJMZYMSMXYBZALT4U24AXN6RAPXNF
 NEXT_PUBLIC_FORGEPASS_REGISTRY_ID=CABRLKSOTTR3YSMXQUPLTBR3QBDIOC5SLPIIX7VI2JPLLTHWL4BQBDOT
+NEXT_PUBLIC_FORGEPASS_NATIVE_ULTRAHONK_CONTRACT_ID=CA4WPPLXN4HSQBLB23ZVCLG5PZ6G5SD3R2BWMSMDY6OVRLFONDAMSMK2
 ```
 
 Use Railway for a future verifier worker or proof service, not for the static frontend requirement. A Railway worker would hold verifier/operator secrets and submit Soroban transactions after real UltraHonk proof generation is wired. The current public web app intentionally does not ship verifier secrets to the browser.

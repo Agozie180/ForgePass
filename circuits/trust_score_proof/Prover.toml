@@ -1,0 +1,11 @@
+monthly_income_usd = "8000"
+average_balance_usd = "3000"
+account_age_months = "18"
+eligible_transactions = "120"
+consistent_months = "9"
+observed_months = "12"
+threshold = "80"
+policy_commitment = "1"
+holder_binding = "2"
+nullifier = "3"
+qualified = true

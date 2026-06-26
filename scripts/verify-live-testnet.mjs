@@ -25,13 +25,10 @@ const explorerBase = "https://stellar.expert/explorer/testnet";
 const requiredContracts = [
   ["ForgePassVerifier", process.env.NEXT_PUBLIC_FORGEPASS_VERIFIER_ID],
   ["ForgePassRegistry", process.env.NEXT_PUBLIC_FORGEPASS_REGISTRY_ID],
+  ["ForgePassNativeUltraHonkVerifier", process.env.NEXT_PUBLIC_FORGEPASS_NATIVE_ULTRAHONK_CONTRACT_ID],
 ];
 
-const optionalContracts = [
-  ["ForgePassNativeUltraHonkVerifier", process.env.NEXT_PUBLIC_FORGEPASS_NATIVE_ULTRAHONK_CONTRACT_ID],
-].filter(([, id]) => Boolean(id));
-
-const contracts = [...requiredContracts, ...optionalContracts];
+const contracts = requiredContracts;
 
 function contractInstanceKey(contractId) {
   const contract = xdr.ScAddress.scAddressTypeContract(Buffer.from(StrKey.decodeContract(contractId)));
@@ -62,11 +59,6 @@ async function main() {
     console.log(`  latestLedger: ${res.latestLedger}`);
     console.log(`  liveUntilLedgerSeq: ${entry.liveUntilLedgerSeq}`);
     console.log(`  explorer: ${explorerBase}/contract/${id}`);
-  }
-
-  if (!optionalContracts.length) {
-    console.log("ForgePassNativeUltraHonkVerifier: NOT CONFIGURED");
-    console.log("  set NEXT_PUBLIC_FORGEPASS_NATIVE_ULTRAHONK_CONTRACT_ID after deploying the VK-backed native verifier");
   }
 }
 
