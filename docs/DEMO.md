@@ -41,7 +41,7 @@ values**.
 
 Pan the **Stellar Verification Record**: network, ledger, proof commitment,
 nullifier, verifier and registry contracts. Note that simulated values are
-labeled "(simulated)". Click **Issue ForgePass Credential**.
+labeled "(simulated)". Native UltraHonk verifier deployed and verified on Stellar Testnet; the demo displays the milestone transaction link, while fresh browser-to-Testnet submission is still future work. Click **Issue ForgePass Credential**.
 
 **1:45 — Credential**
 

@@ -23,6 +23,7 @@ export const CONTRACTS = {
     process.env.NEXT_PUBLIC_FORGEPASS_REGISTRY_ID ??
     "CAFORGEPASSREGISTRY000000000000000000000000000000000DEMO",
   nativeUltraHonkVerifier: process.env.NEXT_PUBLIC_FORGEPASS_NATIVE_ULTRAHONK_CONTRACT_ID ?? "",
+  nativeUltraHonkTxHash: process.env.NEXT_PUBLIC_FORGEPASS_NATIVE_ULTRAHONK_TX_HASH ?? "",
 } as const;
 
 /** True when real on-chain contract IDs have been provided via env. */
@@ -31,6 +32,12 @@ export const HAS_LIVE_CONTRACTS =
   Boolean(process.env.NEXT_PUBLIC_FORGEPASS_REGISTRY_ID);
 
 export const HAS_NATIVE_ULTRAHONK_VERIFIER = Boolean(process.env.NEXT_PUBLIC_FORGEPASS_NATIVE_ULTRAHONK_CONTRACT_ID);
+
+export const HAS_NATIVE_ULTRAHONK_TX_HASH = Boolean(process.env.NEXT_PUBLIC_FORGEPASS_NATIVE_ULTRAHONK_TX_HASH);
+
+export const HAS_NATIVE_ULTRAHONK_MILESTONE =
+  HAS_NATIVE_ULTRAHONK_VERIFIER &&
+  HAS_NATIVE_ULTRAHONK_TX_HASH;
 
 export function shortId(id: string, lead = 6, tail = 4): string {
   if (id.length <= lead + tail) return id;

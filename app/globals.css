@@ -188,6 +188,8 @@ button { font:inherit; }
 a.explorer-link { color:#0f6f43; text-decoration:none; padding:8px 13px; border:1px solid #cee8d9; border-radius:8px; background:#e9f7ef; }
 a.explorer-link:hover { background:#d6f9e6; }
 .explorer-link.disabled { color:#8a7c54; font-weight:500; }
+.native-links { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.native-links strong { display:inline-flex; align-items:center; gap:7px; color:#0f6f43; font-size:11px; }
 
 /* ---- Credential extras ---- */
 .cred-actions { display:flex; gap:9px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }

@@ -23,7 +23,7 @@ fact that a proof was created. Reusing a wallet across services remains linkable
 1. Noir, the proving backend and compiled verification key are correct.
 2. The circuit hash and policy commitment shown to the holder match verification.
 3. Source issuers attest authentic, fresh data and protect signing keys.
-4. The verifier quorum verifies proofs faithfully until native verification is available.
+4. The verifier quorum verifies proofs faithfully for the current receipt flow; the native UltraHonk milestone verifier is deployed for `trust_score_proof`.
 5. Stellar consensus and Soroban authorization behave as specified.
 6. The holder device is not compromised while processing private inputs.
 
@@ -62,31 +62,23 @@ keep distinct eligibility checks unlinkable to each other.
 
 ## Soroban assumptions
 
-- The verifier role faithfully verifies UltraHonk proofs until native on-chain
-  verification (rs-soroban-ultrahonk) is integrated. That integration fixes the
-  verification key at deploy time, generates proofs with `--oracle_hash keccak`
-  to match Soroban's native Keccak-256, and verifies BN254 pairings through the
-  Protocol 25 host functions (`g1_add`/`g1_mul`/`pairing_check`) to stay within
-  the per-transaction instruction budget. Until then the verifier→registry path
-  is authorized by an explicit verifier role rather than an in-circuit check.
+- The verifier role faithfully verifies receipt-flow submissions. Native UltraHonk verification is live on Stellar Testnet for the full `trust_score_proof` circuit via a VK-backed `rs-soroban-ultrahonk` verifier contract. That verifier fixes the verification key at deploy time, uses proofs generated with `--oracle_hash keccak`, and verifies BN254 pairings through Soroban Protocol 25 host functions (`g1_add`/`g1_mul`/`pairing_check`). The current frontend demo displays the milestone verification link; fresh browser-to-Testnet proof transaction submission is still future work.
 - Checks-effects-interactions ordering holds for nullifier consumption.
 - Admin operations (pause, verifier rotation, revocation) are protected by
   `require_auth` and, in production, multisig.
 
 ## Demo limitations
 
-The deployed demo is a vertical slice. Native UltraHonk verification requires a separate VK-backed verifier contract deployment. Specifically:
+The deployed demo is a vertical slice. Native UltraHonk verification is live on Stellar Testnet for the full `trust_score_proof` circuit: the verifier contract is deployed, and `verify_proof` was successfully invoked on-chain. Specifically:
 
-- Browser-side UltraHonk proof generation and the Soroban verification round-trip
-  are **simulated** until Barretenberg VK/proof/public-input artifacts and a native verifier contract are deployed; the SHA-256 commitments are real but the proof bytes and
-  Testnet submission are not. The UI labels simulated proof-generation and transaction values; live contract links are shown separately.
-- Contract IDs are live Stellar Testnet deployments when the public env vars are set; ledger sequence and transaction hash in the browser demo remain deterministic simulations until real submission is wired.
+- Browser-side UltraHonk proof generation and fresh frontend Testnet submission are still future work. The UI displays the verified milestone transaction link rather than claiming each demo credential submits a new transaction.
+- Contract IDs are live Stellar Testnet deployments when the public env vars are set; ledger sequence and browser-session transaction hash remain deterministic simulations until fresh submission is wired.
 - Inputs are self-asserted — there is no source attestation in the demo.
 - The reputation model is illustrative ("Demo Reputation Model"), not a credit score.
 
 ## Future production security
 
-- Replace simulation with real Noir + UltraHonk proving and the native on-chain UltraHonk verifier path; keep the deployed verifier + registry refreshed on Testnet, then deploy audited versions to Mainnet.
+- Replace browser-side simulation with real Noir + UltraHonk proof generation and fresh transaction submission to the deployed native verifier; keep the verifier + registry refreshed on Testnet, then deploy audited versions to Mainnet.
 - Add signed source attestations and an independently operated verifier quorum.
 - External circuit and contract audits; hardware-backed key ceremonies.
 - See the threat table below for the full target control set.

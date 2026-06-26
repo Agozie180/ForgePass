@@ -88,6 +88,7 @@ Environment variable:
 
 ```bash
 NEXT_PUBLIC_FORGEPASS_NATIVE_ULTRAHONK_CONTRACT_ID=CA4WPPLXN4HSQBLB23ZVCLG5PZ6G5SD3R2BWMSMDY6OVRLFONDAMSMK2
+NEXT_PUBLIC_FORGEPASS_NATIVE_ULTRAHONK_TX_HASH=733a10034fbd11cb8a588d7fcc98af30a9d25f7d844c4a2beca65fd15f5a61f5
 ```
 
 `npm run verify:live` verifies the ForgePass verifier, registry, and native UltraHonk verifier contract instances on Stellar Testnet.
@@ -125,7 +126,7 @@ answer.
 
 ```
 Private data ─▶ Off-chain reputation computation ─▶ Noir circuit
-   ─▶ UltraHonk proof scaffold ─▶ live Soroban contracts ─▶ ForgePass credential
+   ─▶ UltraHonk proof artifacts ─▶ native Soroban verifier milestone ─▶ ForgePass credential
 ```
 
 1. The holder enters private signals (income, balance, age, activity, consistency).
@@ -335,10 +336,11 @@ Status: deployed on Stellar Testnet as a native verifier milestone for the full 
 - Artifacts: `artifacts/ultrahonk/trust_score_proof/`
 - Wasm: `artifacts/soroban/native-ultrahonk/rs_soroban_ultrahonk.wasm`
 
-Keep this public env var set in Vercel/Railway:
+Keep these public env vars set in Vercel/Railway:
 
 ```bash
 NEXT_PUBLIC_FORGEPASS_NATIVE_ULTRAHONK_CONTRACT_ID=CA4WPPLXN4HSQBLB23ZVCLG5PZ6G5SD3R2BWMSMDY6OVRLFONDAMSMK2
+NEXT_PUBLIC_FORGEPASS_NATIVE_ULTRAHONK_TX_HASH=733a10034fbd11cb8a588d7fcc98af30a9d25f7d844c4a2beca65fd15f5a61f5
 ```
 
 `npm run verify:live` verifies all three Testnet contracts. Successful submitted transactions use the CTA **View in Stellar Expert Testnet Explorer**.
@@ -352,6 +354,7 @@ NEXT_PUBLIC_STELLAR_RPC_URL=https://soroban-testnet.stellar.org
 NEXT_PUBLIC_FORGEPASS_VERIFIER_ID=CCNNXYINWM3QNC3HNKOU66XCJP5GJMZYMSMXYBZALT4U24AXN6RAPXNF
 NEXT_PUBLIC_FORGEPASS_REGISTRY_ID=CABRLKSOTTR3YSMXQUPLTBR3QBDIOC5SLPIIX7VI2JPLLTHWL4BQBDOT
 NEXT_PUBLIC_FORGEPASS_NATIVE_ULTRAHONK_CONTRACT_ID=CA4WPPLXN4HSQBLB23ZVCLG5PZ6G5SD3R2BWMSMDY6OVRLFONDAMSMK2
+NEXT_PUBLIC_FORGEPASS_NATIVE_ULTRAHONK_TX_HASH=733a10034fbd11cb8a588d7fcc98af30a9d25f7d844c4a2beca65fd15f5a61f5
 ```
 
 Use Railway for a future verifier worker or proof service, not for the static frontend requirement. A Railway worker would hold verifier/operator secrets and submit Soroban transactions after real UltraHonk proof generation is wired. The current public web app intentionally does not ship verifier secrets to the browser.
@@ -399,7 +402,7 @@ policy. See [`docs/SECURITY.md`](docs/SECURITY.md).
 
 1. Add a Railway/server verifier worker for real Noir + UltraHonk proof generation and verifier/operator signing.
 2. Wire real Testnet transaction submission from that worker plus Freighter holder authorization.
-3. Integrate the rs-soroban-ultrahonk native on-chain verifier path.
+3. Wire fresh browser/server proof transaction submission to the deployed native UltraHonk verifier.
 4. Add signed source attestations and a verifier quorum.
 5. Independent circuit + contract audit.
 

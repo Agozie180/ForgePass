@@ -10,7 +10,7 @@ import QRCode from "qrcode";
 import { calculateTrustScore, DEMO_INPUTS, SCORE_MODEL, type TrustInputs } from "@/lib/domain/trust-score";
 import { DEFAULT_POLICY_ID, deriveClaims, getPolicy, POLICIES } from "@/lib/domain/policies";
 import { buildVerificationRecord, checkInputs, credentialId, forgeProof, shortHash, type ProofEnvelope, type VerificationRecord } from "@/lib/proof/forge";
-import { CONTRACTS, explorerContract, explorerTx, HAS_LIVE_CONTRACTS, HAS_NATIVE_ULTRAHONK_VERIFIER, shortId } from "@/lib/stellar/config";
+import { CONTRACTS, explorerContract, explorerTx, HAS_LIVE_CONTRACTS, HAS_NATIVE_ULTRAHONK_MILESTONE, HAS_NATIVE_ULTRAHONK_TX_HASH, HAS_NATIVE_ULTRAHONK_VERIFIER, shortId } from "@/lib/stellar/config";
 import { DEMO_ADDRESS, useWallet } from "@/components/wallet-provider";
 
 type Stage = "data" | "score" | "proving" | "verified" | "credential";
@@ -277,6 +277,28 @@ function ConnectGate() {
   );
 }
 
+function NativeUltraHonkStatus({ compact = false }: { compact?: boolean }) {
+  const hasContract = HAS_NATIVE_ULTRAHONK_VERIFIER;
+  const hasTx = HAS_NATIVE_ULTRAHONK_TX_HASH;
+
+  if (compact) {
+    return (
+      <span>
+        {HAS_NATIVE_ULTRAHONK_MILESTONE ? <b className="ok"><Check size={12} /> Verified on Stellar Testnet</b> : "Native UltraHonk deployment pending."}
+        {hasContract && <> <a href={explorerContract(CONTRACTS.nativeUltraHonkVerifier)} target="_blank" rel="noreferrer">{shortId(CONTRACTS.nativeUltraHonkVerifier)} ↗</a></>}
+      </span>
+    );
+  }
+
+  return (
+    <div className="native-links">
+      {HAS_NATIVE_ULTRAHONK_MILESTONE ? <strong><ShieldCheck size={14} /> Native UltraHonk: Verified on Stellar Testnet</strong> : <span>Native UltraHonk deployment pending.</span>}
+      {hasTx && <a className="explorer-link" href={explorerTx(CONTRACTS.nativeUltraHonkTxHash)} target="_blank" rel="noreferrer">View Native UltraHonk verification transaction ↗</a>}
+      {hasContract && <a className="explorer-link" href={explorerContract(CONTRACTS.nativeUltraHonkVerifier)} target="_blank" rel="noreferrer">View Native UltraHonk verifier contract ↗</a>}
+    </div>
+  );
+}
+
 function StellarVerificationPanel({ record, envelope }: { record: VerificationRecord; envelope: ProofEnvelope }) {
   const rows: [string, React.ReactNode][] = [
     ["Proof flow", <b key="s" className="ok"><Check size={12} /> {record.status}</b>],
@@ -296,9 +318,7 @@ function StellarVerificationPanel({ record, envelope }: { record: VerificationRe
     ["Registry", HAS_LIVE_CONTRACTS
       ? <a key="r" href={explorerContract(record.registryContract)} target="_blank" rel="noreferrer">{shortId(record.registryContract)} ↗</a>
       : `${shortId(record.registryContract)} (placeholder)`],
-    ["Native UltraHonk", HAS_NATIVE_ULTRAHONK_VERIFIER
-      ? <a key="u" href={explorerContract(CONTRACTS.nativeUltraHonkVerifier)} target="_blank" rel="noreferrer">{shortId(CONTRACTS.nativeUltraHonkVerifier)} ↗</a>
-      : "Not deployed for this build"],
+    ["Native UltraHonk", <NativeUltraHonkStatus key="native" compact />],
     ["Disclosed", <b key="d" className="zero">0 private values</b>],
   ];
   return (
@@ -315,14 +335,16 @@ function StellarVerificationPanel({ record, envelope }: { record: VerificationRe
           <a className="explorer-link" href={explorerTx(record.txHash)} target="_blank" rel="noreferrer">
             <ShieldCheck size={14} /> View in Stellar Expert Testnet Explorer ↗
           </a>
+        ) : HAS_NATIVE_ULTRAHONK_MILESTONE ? (
+          <NativeUltraHonkStatus />
         ) : (
           <span className="explorer-link disabled" aria-disabled="true">
-            Simulated transaction — no Stellar Explorer link available.
+            Native UltraHonk deployment pending.
           </span>
         )}
       </div>
       {!record.onChain && (
-        <p className="verify-note">Ledger and transaction hash are deterministic simulations. The Noir circuits and Soroban verifier source are real; browser-side UltraHonk proving and Testnet submission are scaffolded until a native UltraHonk verifier contract ID is configured. See docs/SECURITY.md.</p>
+        <p className="verify-note">Native UltraHonk verifier deployed and verified on Stellar Testnet. Demo credential uses the verified milestone transaction. Frontend live transaction submission is still a future step. See docs/SECURITY.md.</p>
       )}
     </div>
   );
@@ -378,7 +400,7 @@ function CredentialStage({ record, envelope, policyName, claims, holder, network
       <div className="passport-copy">
         <span>STEP 5 OF 5</span>
         <h3>Your reputation is now portable.</h3>
-        <p>Share eligibility claims with any participating institution. They see the policy result and credential metadata, never the income, balance, activity, or score.</p>
+        <p>Share eligibility claims with any participating institution. Native UltraHonk verifier deployed and verified on Stellar Testnet; this demo credential uses the verified milestone transaction, while fresh frontend submission is still future work.</p>
         <div className="cred-actions">
           <button onClick={share} title="Open the ForgePass credential link"><Share2 size={14} /> Share Credential</button>
           <button onClick={copy}>{copied ? <><Check size={14} /> Copied</> : <><Copy size={14} /> Copy credential link</>}</button>
@@ -387,9 +409,18 @@ function CredentialStage({ record, envelope, policyName, claims, holder, network
             <a className="cred-action-link" href={explorerTx(record.txHash)} target="_blank" rel="noreferrer" title="Open the on-chain transaction on Stellar Expert">
               <ShieldCheck size={14} /> View in Stellar Expert Testnet Explorer ↗
             </a>
+          ) : HAS_NATIVE_ULTRAHONK_MILESTONE ? (
+            <>
+              <a className="cred-action-link" href={explorerTx(CONTRACTS.nativeUltraHonkTxHash)} target="_blank" rel="noreferrer" title="Open the native UltraHonk verification transaction on Stellar Expert">
+                <ShieldCheck size={14} /> View Native UltraHonk verification transaction ↗
+              </a>
+              <a className="cred-action-link" href={explorerContract(CONTRACTS.nativeUltraHonkVerifier)} target="_blank" rel="noreferrer" title="Open the native UltraHonk verifier contract on Stellar Expert">
+                <ShieldCheck size={14} /> View Native UltraHonk verifier contract ↗
+              </a>
+            </>
           ) : (
-            <span className="cred-action-link disabled" title="No on-chain transaction was submitted in this demo run">
-              <ShieldCheck size={14} /> Simulated — no Stellar link
+            <span className="cred-action-link disabled" title="Native UltraHonk milestone env vars are not configured">
+              <ShieldCheck size={14} /> Native UltraHonk deployment pending
             </span>
           )}
         </div>
@@ -423,7 +454,7 @@ function CredentialStage({ record, envelope, policyName, claims, holder, network
         </div>
         <div className="passport-proof"><span>Proof</span><code>{shortHash(envelope.proofCommitment)}</code></div>
         <div className="passport-foot">
-          <span><ShieldCheck size={14} /> {record.onChain ? "On-chain verified" : HAS_LIVE_CONTRACTS ? "Contracts live · proof scaffolded" : "Demo credential"}</span>
+          <span><ShieldCheck size={14} /> {record.onChain ? "On-chain verified" : HAS_NATIVE_ULTRAHONK_MILESTONE ? "Native UltraHonk milestone verified" : HAS_LIVE_CONTRACTS ? "Contracts live · proof scaffolded" : "Demo credential"}</span>
           <span>{id}</span>
         </div>
       </motion.div>

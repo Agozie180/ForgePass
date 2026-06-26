@@ -1,6 +1,6 @@
 import { ArrowRight, Binary, Cpu, FileCheck2, Fingerprint, LockKeyhole, ShieldCheck, Sparkles, Wallet } from "lucide-react";
 import { ProofExperience } from "@/components/proof-experience";
-import { CONTRACTS, HAS_NATIVE_ULTRAHONK_VERIFIER, STELLAR_NETWORK, explorerContract, shortId } from "@/lib/stellar/config";
+import { CONTRACTS, HAS_NATIVE_ULTRAHONK_MILESTONE, HAS_NATIVE_ULTRAHONK_TX_HASH, HAS_NATIVE_ULTRAHONK_VERIFIER, STELLAR_NETWORK, explorerContract, explorerTx, shortId } from "@/lib/stellar/config";
 import { WalletButton } from "@/components/wallet-button";
 
 const signals = [
@@ -14,12 +14,13 @@ const deploymentFacts = [
   { label: "Verifier contract", value: CONTRACTS.verifier, href: explorerContract(CONTRACTS.verifier) },
   { label: "Registry contract", value: CONTRACTS.registry, href: explorerContract(CONTRACTS.registry) },
   { label: "Current role", value: "Verifier consumes authorized proof receipts and nullifiers; registry issues holder credentials. Browser proof submission remains scaffolded." },
-  { label: "Native UltraHonk", value: HAS_NATIVE_ULTRAHONK_VERIFIER ? CONTRACTS.nativeUltraHonkVerifier : "Pending deployment: requires VK/proof/public-input artifacts", href: HAS_NATIVE_ULTRAHONK_VERIFIER ? explorerContract(CONTRACTS.nativeUltraHonkVerifier) : undefined },
+  { label: "Native UltraHonk", value: HAS_NATIVE_ULTRAHONK_MILESTONE ? "Verified milestone on Stellar Testnet" : "Native UltraHonk deployment pending", href: HAS_NATIVE_ULTRAHONK_VERIFIER ? explorerContract(CONTRACTS.nativeUltraHonkVerifier) : undefined },
+  { label: "Native verify_proof tx", value: HAS_NATIVE_ULTRAHONK_TX_HASH ? shortId(CONTRACTS.nativeUltraHonkTxHash, 8, 8) : "Milestone transaction pending", href: HAS_NATIVE_ULTRAHONK_TX_HASH ? explorerTx(CONTRACTS.nativeUltraHonkTxHash) : undefined },
 ];
 
 const truthRows = [
-  { label: "Real", items: ["Frontend Proof Studio", "Reputation scoring model", "Noir circuits and tests", "Soroban verifier and registry contracts", "Verified Stellar Testnet deployments"] },
-  { label: "Simulated / scaffolded", items: ["Browser-side UltraHonk proof generation", "Frontend Testnet transaction submission", "VK-backed native UltraHonk verifier contract"] },
+  { label: "Real", items: ["Frontend Proof Studio", "Reputation scoring model", "Noir circuits and tests", "Soroban verifier and registry contracts", "Native UltraHonk verifier milestone", "Verified Stellar Testnet deployments"] },
+  { label: "Simulated / scaffolded", items: ["Browser-side UltraHonk proof generation", "Frontend Testnet transaction submission from the demo UI"] },
   { label: "Next", items: ["Real proof generation", "Signed bank, payroll, employer, or oracle attestations", "Independent audits"] },
 ];
 
@@ -145,7 +146,7 @@ export default function Home() {
       <section className="live-testnet shell" id="testnet">
         <div className="section-heading">
           <div><span className="section-number">02 / LIVE DEPLOYMENT</span><h2>Stellar integration you can inspect.</h2></div>
-          <p>ForgePass is deployed on Stellar Testnet with verifier and registry contracts judges can open in Stellar Expert. Browser proof generation, transaction submission, and native UltraHonk verification are labeled until the VK-backed verifier is deployed.</p>
+          <p>ForgePass is deployed on Stellar Testnet with verifier, registry, and VK-backed native UltraHonk verifier contracts judges can open in Stellar Expert. The demo shows the verified milestone transaction; fresh frontend proof submission is still labeled as future work.</p>
         </div>
         <div className="testnet-grid">
           {deploymentFacts.map((fact) => (
