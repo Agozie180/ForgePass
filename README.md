@@ -162,7 +162,7 @@ flowchart LR
 | App | Next.js 15 · React 19 · TypeScript | Interactive Proof Studio, wallet UX |
 | Wallet | `@stellar/freighter-api` + Demo Mode | Real Testnet address or simulated session |
 | Off-chain compute | `lib/domain` | Deterministic reputation model + canonical vectors |
-| Circuits | Noir (`v1.0.0-beta.22`) | Five threshold predicates incl. flagship score circuit |
+| Circuits | Noir (`v1.0.0-beta.9`) | Five threshold predicates incl. flagship score circuit |
 | Proof system target | UltraHonk | Browser proof generation with Barretenberg artifacts for `trust_score_proof`; Freighter mode submits proof bytes to Soroban |
 | Verification surface | Soroban (Rust, `wasm32v1-none`) | Live replay-safe verifier + credential registry contracts + deployed native UltraHonk verifier |
 | Commitments | Web Crypto SHA-256 | Public-input commitment, holder binding, nullifier |
