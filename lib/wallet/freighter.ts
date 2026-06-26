@@ -74,7 +74,11 @@ export async function signFreighterTransaction(
   networkPassphrase: string,
   accountToSign: string,
 ): Promise<string> {
-  const res = await signTransaction(transactionXdr, { networkPassphrase, address: accountToSign });
+  const res = await signTransaction(transactionXdr, {
+    networkPassphrase,
+    address: accountToSign,
+    accountToSign,
+  } as Parameters<typeof signTransaction>[1] & { accountToSign: string });
   if (res.error || !res.signedTxXdr) throw new Error(res.error?.message || "Freighter did not return a signed transaction.");
   return res.signedTxXdr;
 }

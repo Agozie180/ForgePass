@@ -86,6 +86,7 @@ export function ProofExperience() {
   );
 
   const setField = (key: keyof TrustInputs, value: number) => {
+    setProofRun(INITIAL_PROOF_RUN_STATE);
     setInputs((prev) => {
       const next = { ...prev, [key]: Number.isFinite(value) ? value : 0 };
       if (key === "consistentMonths") next.consistentMonths = Math.min(next.consistentMonths, next.observedMonths);
@@ -217,21 +218,8 @@ export function ProofExperience() {
                     </div>
                   </div>
 
-                  <div className="field-grid">
-                    {FIELDS.map((f) => (
-                      <label key={f.key} className="field">
-                        <span className="field-label">{f.label}</span>
-                        <div className="field-value">
-                          {f.prefix}<strong>{fmt(inputs[f.key])}</strong>{f.suffix}
-                        </div>
-                        <input
-                          type="range" min={0} max={f.max} step={f.step} value={inputs[f.key]}
-                          onChange={(e) => setField(f.key, Number(e.target.value))}
-                          aria-label={f.label}
-                        />
-                      </label>
-                    ))}
-                  </div>
+
+                  <SignalFieldGrid inputs={inputs} onChange={setField} />
 
                   <div className="action-row">
                     {guard.ok ? (
@@ -270,6 +258,10 @@ export function ProofExperience() {
                           : <b className="fails"><X size={13} /> Below threshold</b>}
                       </div>
                     </div>
+                  </div>
+                  <div className="score-input-panel">
+                    <div><span className="mono-label">LIVE INPUTS</span><strong>Adjust signals and watch the score change</strong></div>
+                    <SignalFieldGrid inputs={inputs} onChange={setField} compact />
                   </div>
                   <div className="action-row">
                     <p><LockKeyhole size={16} /> ZK turns the score into a predicate: “above {policy.scoreThreshold}”</p>
@@ -348,6 +340,25 @@ export function ProofExperience() {
   );
 }
 
+function SignalFieldGrid({ inputs, onChange, compact = false }: { inputs: TrustInputs; onChange: (key: keyof TrustInputs, value: number) => void; compact?: boolean }) {
+  return (
+    <div className={compact ? "field-grid compact" : "field-grid"}>
+      {FIELDS.map((f) => (
+        <label key={f.key} className="field">
+          <span className="field-label">{f.label}</span>
+          <div className="field-value">
+            {f.prefix}<strong>{fmt(inputs[f.key])}</strong>{f.suffix}
+          </div>
+          <input
+            type="range" min={0} max={f.max} step={f.step} value={inputs[f.key]}
+            onChange={(e) => onChange(f.key, Number(e.target.value))}
+            aria-label={f.label}
+          />
+        </label>
+      ))}
+    </div>
+  );
+}
 function StudioWalletPill() {
   const { status, address, network, isDemo, connectWallet, enableDemo } = useWallet();
   if (status === "connected" && address) {
