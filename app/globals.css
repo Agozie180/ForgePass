@@ -275,3 +275,16 @@ a.cred-action-link:hover { background:#d6f9e6; }
 @media (max-width: 980px) {
   .why-grid { grid-template-columns:1fr; }
 }
+
+/* ---- Browser proving states ---- */
+.hint.error { color:#c0552f; overflow-wrap:anywhere; }
+.proof-error-card { width:min(620px,94%); margin:0 auto; padding:24px; border:1px solid #ead0bd; border-radius:12px; background:#fff8f2; text-align:left; }
+.proof-error-card h3 { margin:10px 0 8px; color:#3b2419; }
+.proof-error-card p { margin:0 0 14px; color:#725e4f; font-size:12px; line-height:1.6; }
+.proof-error-card code { display:block; max-height:130px; overflow:auto; margin:12px 0; padding:12px; border:1px solid #ecd7c9; border-radius:8px; background:#fff; color:#9a3e1f; font:600 10px/1.5 var(--font-mono); overflow-wrap:anywhere; white-space:pre-wrap; }
+.proof-state-grid { display:grid; grid-template-columns:1fr; gap:8px; margin:14px 0; }
+.proof-state-grid span { display:flex; align-items:center; gap:7px; color:#4e5b52; font:600 10px var(--font-geist); }
+.proof-state-grid span:nth-child(-n+2) { color:#0f6f43; }
+.proof-error-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }
+.proof-error-actions button { display:inline-flex; align-items:center; gap:7px; cursor:pointer; border:0; border-radius:8px; padding:10px 14px; background:var(--deep); color:#fff; font-size:11px; font-weight:650; }
+.proof-error-actions button.ghost { background:#fff; color:#2a352e; border:1px solid #d6ddd8; }

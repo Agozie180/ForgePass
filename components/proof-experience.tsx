@@ -10,8 +10,8 @@ import QRCode from "qrcode";
 import { calculateTrustScore, DEMO_INPUTS, SCORE_MODEL, type TrustInputs } from "@/lib/domain/trust-score";
 import { DEFAULT_POLICY_ID, deriveClaims, getPolicy, POLICIES } from "@/lib/domain/policies";
 import { buildVerificationRecord, checkInputs, credentialId, shortHash, type ProofEnvelope, type VerificationRecord } from "@/lib/proof/forge";
+import { INITIAL_PROOF_RUN_STATE, isBrowserProofUnsupportedError, reduceProofRunState } from "@/lib/proof/proof-state";
 import { generateBrowserUltraHonkProof } from "@/lib/proof/browser-ultrahonk";
-import { submitNativeUltraHonkProof } from "@/lib/stellar/native-ultrahonk";
 import { CONTRACTS, explorerContract, explorerTx, HAS_LIVE_CONTRACTS, HAS_NATIVE_ULTRAHONK_MILESTONE, HAS_NATIVE_ULTRAHONK_TX_HASH, HAS_NATIVE_ULTRAHONK_VERIFIER, shortId } from "@/lib/stellar/config";
 import { DEMO_ADDRESS, useWallet } from "@/components/wallet-provider";
 
@@ -28,6 +28,32 @@ const FIELDS: { key: keyof TrustInputs; label: string; prefix?: string; suffix?:
 ];
 
 const fmt = (n: number) => n.toLocaleString("en-US");
+const BROWSER_PROOF_TIMEOUT_MS = 45_000;
+
+function describeProofError(error: unknown): string {
+  if (error instanceof Error) return error.message || error.name;
+  if (typeof error === "string") return error;
+  try { return JSON.stringify(error); } catch { return "Unknown UltraHonk proof error"; }
+}
+
+function devLogProofError(error: unknown) {
+  if (process.env.NODE_ENV !== "production") console.error("[ForgePass UltraHonk]", error);
+}
+
+function waitForPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => window.setTimeout(resolve, 0));
+  });
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timeout = window.setTimeout(() => {
+      reject(new Error(`Browser proving could not complete on this device within ${Math.round(ms / 1000)} seconds. Use verified milestone transaction or run local prover.`));
+    }, ms);
+    promise.then((value) => { window.clearTimeout(timeout); resolve(value); }, (error) => { window.clearTimeout(timeout); reject(error); });
+  });
+}
 
 export function ProofExperience() {
   const wallet = useWallet();
@@ -39,8 +65,7 @@ export function ProofExperience() {
   const [policyId, setPolicyId] = useState(DEFAULT_POLICY_ID);
   const [envelope, setEnvelope] = useState<ProofEnvelope | null>(null);
   const [record, setRecord] = useState<VerificationRecord | null>(null);
-  const [proofStatus, setProofStatus] = useState("Ready");
-  const [proofError, setProofError] = useState<string | null>(null);
+  const [proofRun, setProofRun] = useState(INITIAL_PROOF_RUN_STATE);
 
   const policy = getPolicy(policyId);
   const stageIndex = stageOrder.indexOf(stage);
@@ -69,18 +94,30 @@ export function ProofExperience() {
   };
 
   const runProof = useCallback(async () => {
-    if (!score) return;
+    if (!score || proofRun.status === "generating") return;
     setStage("proving");
-    setProofError(null);
-    setProofStatus("Generating Noir witness in this browser");
+    setEnvelope(null);
+    setRecord(null);
+    setProofRun((state) => reduceProofRunState(state, { type: "start" }));
+
+    let browserProofGenerated = false;
+
     try {
-      const env = await generateBrowserUltraHonkProof(policy, score, inputs, holder);
-      setProofStatus("UltraHonk proof generated and locally verified");
+      await waitForPaint();
+      const env = await withTimeout(
+        generateBrowserUltraHonkProof(policy, score, inputs, holder, (message) => {
+          setProofRun((state) => reduceProofRunState(state, { type: "progress", message }));
+        }),
+        BROWSER_PROOF_TIMEOUT_MS,
+      );
+      browserProofGenerated = true;
+      setProofRun((state) => reduceProofRunState(state, { type: "success" }));
       const now = new Date().toISOString();
       let rec = await buildVerificationRecord(env, holder, now);
 
       if (!wallet.isDemo) {
-        setProofStatus("Submitting verify_proof to Stellar Testnet");
+        setProofRun((state) => reduceProofRunState(state, { type: "progress", message: "Submitting verify_proof to Stellar Testnet" }));
+        const { submitNativeUltraHonkProof } = await import("@/lib/stellar/native-ultrahonk");
         const submission = await submitNativeUltraHonkProof(env, holder);
         rec = {
           ...rec,
@@ -89,25 +126,31 @@ export function ProofExperience() {
           ledger: submission.latestLedger ?? rec.ledger,
           onChain: true,
         };
-      } else {
-        setProofStatus("Demo Mode cannot sign; showing verified milestone transaction");
       }
 
       setEnvelope(env);
       setRecord(rec);
       setStage("verified");
     } catch (error) {
-      setProofError(error instanceof Error ? error.message : "UltraHonk proof or Testnet submission failed.");
-      setStage("score");
+      devLogProofError(error);
+      const rawMessage = describeProofError(error);
+      const message = browserProofGenerated && !wallet.isDemo
+        ? `Fresh browser proof generated, but Testnet submission failed: ${rawMessage}`
+        : rawMessage;
+      setProofRun((state) => reduceProofRunState(state, {
+        type: "error",
+        error: message,
+        notSupported: !browserProofGenerated && isBrowserProofUnsupportedError(message),
+      }));
+      setStage("proving");
     }
-  }, [score, policy, inputs, holder, wallet.isDemo]);
+  }, [score, proofRun.status, policy, inputs, holder, wallet.isDemo]);
 
   const reset = () => {
     setStage("data");
     setEnvelope(null);
     setRecord(null);
-    setProofError(null);
-    setProofStatus("Ready");
+    setProofRun(INITIAL_PROOF_RUN_STATE);
   };
 
   return (
@@ -217,10 +260,10 @@ export function ProofExperience() {
                     <p><LockKeyhole size={16} /> ZK turns the score into a predicate: “above {policy.scoreThreshold}”</p>
                     <div className="action-buttons">
                       <button className="ghost" onClick={() => setStage("data")}>Edit inputs</button>
-                      <button onClick={runProof} disabled={!qualifies}>Generate UltraHonk proof <ArrowRight size={16} /></button>
+                      <button onClick={runProof} disabled={!qualifies || proofRun.status === "generating"}>{proofRun.status === "generating" ? "Generating UltraHonk proof..." : "Generate UltraHonk proof"} <ArrowRight size={16} /></button>
                     </div>
                   </div>
-                  {proofError && <p className="hint error">{proofError}</p>}
+                  {proofRun.error && <p className="hint error">{proofRun.error}</p>}
                   {!qualifies && <p className="hint">Raise your inputs until the score beats {policy.scoreThreshold}, or choose a lower policy tier.</p>}
                 </motion.div>
               )}
@@ -228,16 +271,37 @@ export function ProofExperience() {
               {stage === "proving" && (
                 <motion.div key="proving" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="stage-content proving-stage">
                   <div className="proof-core">
-                    <div className="proof-rings"><span /><span /><Fingerprint size={38} /></div>
-                    <span className="mono-label">NOIR / ULTRAHONK LIVE PROVING</span>
-                    <h3>Generating the ZK predicate</h3>
-                    <p>The Noir circuit executes locally, Barretenberg generates an UltraHonk proof, and Freighter wallet mode submits verify_proof to Stellar Testnet.</p>
-                    <div className="proof-progress"><motion.i initial={{ width: "4%" }} animate={{ width: "100%" }} transition={{ duration: 2, ease: "easeInOut" }} /></div>
-                    <div className="proof-steps">
-                      <span><Check size={12} /> Witness encoded</span>
-                      <span><Check size={12} /> Constraints satisfied</span>
-                      <span><LoaderCircle className="spin" size={12} /> {proofStatus}</span>
-                    </div>
+                    {proofRun.status === "failed" || proofRun.status === "not-supported" ? (
+                      <div className="proof-error-card">
+                        <span className="mono-label">FRESH BROWSER PROOF {proofRun.status === "not-supported" ? "NOT SUPPORTED" : "FAILED"}</span>
+                        <h3>{proofRun.status === "not-supported" ? "Browser proving could not complete on this device." : "UltraHonk proof did not complete."}</h3>
+                        <p>{proofRun.message}</p>
+                        {proofRun.error && <code>{proofRun.error}</code>}
+                        <div className="proof-state-grid">
+                          <span><ShieldCheck size={13} /> Native verifier deployed</span>
+                          <span><ShieldCheck size={13} /> Milestone proof verified on Stellar Testnet</span>
+                          <span><X size={13} /> Fresh browser proof generation status: {proofRun.status === "not-supported" ? "not supported on this device" : "failed"}</span>
+                        </div>
+                        <NativeUltraHonkStatus />
+                        <div className="proof-error-actions">
+                          <button className="ghost" onClick={() => setStage("score")}>Back to score</button>
+                          <button onClick={runProof}>Retry browser proof <ArrowRight size={16} /></button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="proof-rings"><span /><span /><Fingerprint size={38} /></div>
+                        <span className="mono-label">NOIR / ULTRAHONK LIVE PROVING</span>
+                        <h3>Generating the ZK predicate</h3>
+                        <p>The Noir circuit executes locally, Barretenberg generates an UltraHonk proof, and Freighter wallet mode submits verify_proof to Stellar Testnet.</p>
+                        <div className="proof-progress"><motion.i initial={{ width: "4%" }} animate={{ width: "100%" }} transition={{ duration: 2, ease: "easeInOut" }} /></div>
+                        <div className="proof-steps">
+                          <span><Check size={12} /> Native verifier deployed</span>
+                          <span><Check size={12} /> Milestone proof verified</span>
+                          <span><LoaderCircle className="spin" size={12} /> {proofRun.message}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -319,9 +383,9 @@ function NativeUltraHonkStatus({ compact = false }: { compact?: boolean }) {
 
   return (
     <div className="native-links">
-      {HAS_NATIVE_ULTRAHONK_MILESTONE ? <strong><ShieldCheck size={14} /> Native UltraHonk: Verified on Stellar Testnet</strong> : <span>Native UltraHonk deployment pending.</span>}
-      {hasTx && <a className="explorer-link" href={explorerTx(CONTRACTS.nativeUltraHonkTxHash)} target="_blank" rel="noreferrer">View Native UltraHonk verification transaction ↗</a>}
-      {hasContract && <a className="explorer-link" href={explorerContract(CONTRACTS.nativeUltraHonkVerifier)} target="_blank" rel="noreferrer">View Native UltraHonk verifier contract ↗</a>}
+      {HAS_NATIVE_ULTRAHONK_MILESTONE ? <strong><ShieldCheck size={14} /> Native UltraHonk verifier deployed on Stellar Testnet</strong> : <span>Native UltraHonk deployment pending.</span>}
+      {hasTx && <a className="explorer-link" href={explorerTx(CONTRACTS.nativeUltraHonkTxHash)} target="_blank" rel="noreferrer">View verified milestone transaction ↗</a>}
+      {hasContract && <a className="explorer-link" href={explorerContract(CONTRACTS.nativeUltraHonkVerifier)} target="_blank" rel="noreferrer">View native verifier contract ↗</a>}
     </div>
   );
 }
@@ -347,6 +411,7 @@ function StellarVerificationPanel({ record, envelope }: { record: VerificationRe
       ? <a key="r" href={explorerContract(record.registryContract)} target="_blank" rel="noreferrer">{shortId(record.registryContract)} ↗</a>
       : `${shortId(record.registryContract)} (placeholder)`],
     ["Native UltraHonk", <NativeUltraHonkStatus key="native" compact />],
+    ["Fresh browser proof", envelope.proofKind === "browser-ultrahonk" ? <b key="fresh" className="ok"><Check size={12} /> success</b> : "not generated"],
     ["Disclosed", <b key="d" className="zero">0 private values</b>],
   ];
   return (
@@ -372,7 +437,7 @@ function StellarVerificationPanel({ record, envelope }: { record: VerificationRe
         )}
       </div>
       {!record.onChain && (
-        <p className="verify-note">Browser UltraHonk proof generation is live. Demo Mode cannot sign transactions, so it displays the verified milestone transaction; Freighter wallet mode submits a fresh native verify_proof transaction.</p>
+        <p className="verify-note">Fresh browser proof generation status: success. Demo Mode cannot sign transactions, so it displays the verified milestone transaction; Freighter wallet mode submits a fresh native verify_proof transaction.</p>
       )}
     </div>
   );
@@ -440,10 +505,10 @@ function CredentialStage({ record, envelope, policyName, claims, holder, network
           ) : HAS_NATIVE_ULTRAHONK_MILESTONE ? (
             <>
               <a className="cred-action-link" href={explorerTx(CONTRACTS.nativeUltraHonkTxHash)} target="_blank" rel="noreferrer" title="Open the native UltraHonk verification transaction on Stellar Expert">
-                <ShieldCheck size={14} /> View Native UltraHonk verification transaction ↗
+                <ShieldCheck size={14} /> View verified milestone transaction ↗
               </a>
               <a className="cred-action-link" href={explorerContract(CONTRACTS.nativeUltraHonkVerifier)} target="_blank" rel="noreferrer" title="Open the native UltraHonk verifier contract on Stellar Expert">
-                <ShieldCheck size={14} /> View Native UltraHonk verifier contract ↗
+                <ShieldCheck size={14} /> View native verifier contract ↗
               </a>
             </>
           ) : (
@@ -482,7 +547,7 @@ function CredentialStage({ record, envelope, policyName, claims, holder, network
         </div>
         <div className="passport-proof"><span>Proof</span><code>{shortHash(envelope.proofCommitment)}</code></div>
         <div className="passport-foot">
-          <span><ShieldCheck size={14} /> {record.onChain ? "On-chain verified" : HAS_NATIVE_ULTRAHONK_MILESTONE ? "Native UltraHonk proof generated" : HAS_LIVE_CONTRACTS ? "Contracts live" : "Demo credential"}</span>
+          <span><ShieldCheck size={14} /> {record.onChain ? "On-chain verified" : HAS_NATIVE_ULTRAHONK_MILESTONE ? "Native UltraHonk verifier deployed on Stellar Testnet" : HAS_LIVE_CONTRACTS ? "Contracts live" : "Demo credential"}</span>
           <span>{id}</span>
         </div>
       </motion.div>
