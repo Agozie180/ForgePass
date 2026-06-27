@@ -50,6 +50,8 @@ balance, age, activity, reputation). Use **Copy link**, **Share**, and **QR
 code**. Point at the notice: *no private financial information is stored or
 revealed.*
 
+Open the copied `?fp=` link in a new tab to show the public verification view: credential ID, holder, network, proof hash, verified claims, and Stellar links only.
+
 **2:00 — Close**
 
 > "Today: show me your data. Tomorrow: prove you qualify. Reputation verified,

@@ -102,6 +102,8 @@ NEXT_PUBLIC_FORGEPASS_NATIVE_ULTRAHONK_TX_HASH=733a10034fbd11cb8a588d7fcc98af30a
 5. Submit `verify_proof` with Freighter or inspect the verified milestone transaction in Demo Mode.
 6. Export/share the credential.
 
+Shared credential links use a `?fp=` encoded public payload containing only credential metadata (`id`, `policy`, `holder`, `network`, `proof`, `claims`, `ts`, and an optional fresh transaction hash). Opening one renders a public verification view with no private financial values.
+
 A longer recording script lives at [`docs/demo-video-script.md`](docs/demo-video-script.md), with a shorter live walkthrough in [`docs/DEMO.md`](docs/DEMO.md).
 
 ## What Is Real vs Limited

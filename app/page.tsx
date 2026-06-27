@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { ArrowRight, Binary, Cpu, FileCheck2, Fingerprint, LockKeyhole, ShieldCheck, Sparkles, Wallet } from "lucide-react";
 import { ProofExperience } from "@/components/proof-experience";
 import { CONTRACTS, HAS_NATIVE_ULTRAHONK_MILESTONE, HAS_NATIVE_ULTRAHONK_TX_HASH, HAS_NATIVE_ULTRAHONK_VERIFIER, STELLAR_NETWORK, explorerContract, explorerTx, shortId } from "@/lib/stellar/config";
 import { WalletButton } from "@/components/wallet-button";
+import { formatSharedCredentialClaim, getSharedCredentialTxHash, parseSharedCredentialRoute, type SharedCredentialPayload } from "@/lib/credential/share-link";
 
 const signals = [
   { icon: LockKeyhole, title: "What it does", text: "ForgePass turns private financial signals into a shareable reputation credential." },
@@ -47,7 +49,103 @@ const pipeline = [
   { icon: FileCheck2, label: "Credential", note: "Verified claims only" },
 ];
 
-export default function Home() {
+
+type HomeProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function PublicCredentialView({ credential }: { credential: SharedCredentialPayload | null }) {
+  const txHash = credential ? getSharedCredentialTxHash(credential) : null;
+  const txHref = txHash ? explorerTx(txHash) : HAS_NATIVE_ULTRAHONK_TX_HASH ? explorerTx(CONTRACTS.nativeUltraHonkTxHash) : null;
+  const txLabel = txHash ? "View fresh verification transaction" : "View verified milestone transaction";
+
+  return (
+    <main className="shared-credential-page">
+      <section className="shared-shell">
+        <Link className="brand shared-brand" href="/" aria-label="Open ForgePass">
+          <span className="brand-mark">F</span>
+          <span>FORGEPASS</span>
+        </Link>
+
+        {!credential ? (
+          <article className="shared-card invalid-card">
+            <span className="section-number">PUBLIC VERIFY</span>
+            <h1>Invalid ForgePass credential link.</h1>
+            <p>The shared payload could not be decoded or did not contain the expected public credential fields.</p>
+            <Link className="primary-button" href="/">Open ForgePass <ArrowRight size={17} /></Link>
+          </article>
+        ) : (
+          <article className="shared-card">
+            <div className="shared-status">
+              <span><ShieldCheck size={15} /> Public credential verification</span>
+              <strong>{credential.network}</strong>
+            </div>
+            <h1>ForgePass credential verified.</h1>
+            <p className="shared-intro">This page displays only public eligibility claims. Private income, balance, activity, account age, and exact score are not included in the shared link.</p>
+
+            <div className="shared-grid">
+              <div><span>Credential ID</span><strong>{credential.id}</strong></div>
+              <div><span>Policy</span><strong>{credential.policy}</strong></div>
+              <div><span>Holder</span><strong>{shortId(credential.holder, 6, 4)}</strong></div>
+              <div><span>Network</span><strong>{credential.network}</strong></div>
+              <div><span>Proof hash</span><strong>{credential.proof}</strong></div>
+              <div><span>Timestamp</span><strong>{formatCredentialTimestamp(credential.ts)}</strong></div>
+            </div>
+
+            <div className="shared-claims">
+              <span>Verified claims</span>
+              <ul>
+                {credential.claims.map((claim) => (
+                  <li key={claim}><ShieldCheck size={14} /> {formatSharedCredentialClaim(claim)}</li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="shared-links">
+              {HAS_NATIVE_ULTRAHONK_VERIFIER ? (
+                <a href={explorerContract(CONTRACTS.nativeUltraHonkVerifier)} target="_blank" rel="noreferrer">
+                  Native UltraHonk verifier contract
+                </a>
+              ) : (
+                <span>Native UltraHonk verifier contract unavailable</span>
+              )}
+              {txHref ? (
+                <a href={txHref} target="_blank" rel="noreferrer">{txLabel}</a>
+              ) : (
+                <span>Verification transaction unavailable</span>
+              )}
+              {HAS_NATIVE_ULTRAHONK_MILESTONE && !txHash && (
+                <small>Displayed transaction is the verified native UltraHonk milestone for this demo.</small>
+              )}
+            </div>
+
+            <div className="shared-actions">
+              <Link className="primary-button" href="/">Verify another credential <ArrowRight size={17} /></Link>
+              <Link className="text-button" href="/">Open ForgePass</Link>
+            </div>
+          </article>
+        )}
+      </section>
+    </main>
+  );
+}
+
+function formatCredentialTimestamp(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }) + " UTC";
+}
+
+export default async function Home({ searchParams }: HomeProps) {
+  const params = await Promise.resolve(searchParams);
+  const sharedRoute = parseSharedCredentialRoute(params?.fp);
+
+  if (sharedRoute.kind === "invalid") {
+    return <PublicCredentialView credential={null} />;
+  }
+
+  if (sharedRoute.kind === "credential") {
+    return <PublicCredentialView credential={sharedRoute.credential} />;
+  }
   return (
     <main>
       <nav className="nav shell">
@@ -199,6 +297,4 @@ export default function Home() {
     </main>
   );
 }
-
-
 

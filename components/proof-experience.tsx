@@ -489,10 +489,11 @@ function CredentialStage({ record, envelope, policyName, claims, holder, network
       proof: envelope.proofCommitment.slice(0, 16),
       claims: claims.filter((c) => c.satisfied).map((c) => c.key),
       ts: record.timestamp,
+      ...(record.onChain ? { txHash: record.txHash } : {}),
     };
     const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
     return `${window.location.origin}/?fp=${encoded}`;
-  }, [id, policyName, holder, network, envelope, claims, record.timestamp]);
+  }, [id, policyName, holder, network, envelope, claims, record.timestamp, record.onChain, record.txHash]);
 
   useEffect(() => {
     if (!shareUrl) return;

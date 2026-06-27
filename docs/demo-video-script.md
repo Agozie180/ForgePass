@@ -66,6 +66,7 @@ light theme. Recommended companion stills live in `docs/screenshots/`.
 
 - Click **Issue ForgePass Credential**; show the claims animate in.
 - Click **QR code**, then **Copy link**. Point at the privacy notice.
+- Open the copied `?fp=` shared credential link in a new tab. Show that the public verification page contains no private values, only credential metadata, verified claims, and Stellar verifier / transaction links.
 - Screenshot: `credential.png`.
 
 ## 2:25 — 2:30 · Close
